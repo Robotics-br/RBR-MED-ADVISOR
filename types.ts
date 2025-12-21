@@ -8,6 +8,7 @@ export interface StudyResult {
   estimatedEfficacy: number;
   averageAge: number;
   fonte_origem: string;
+  type?: 'TREATMENT' | 'DIAGNOSIS';
   isWarning?: boolean;
   warningMessage?: string;
 }

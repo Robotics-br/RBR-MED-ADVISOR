@@ -5,6 +5,7 @@ import { StudyCard } from './components/StudyCard';
 import { VisualAnalysis } from './components/VisualAnalysis';
 import { StudyDetailsModal } from './components/StudyDetailsModal';
 import { SourceRelevance } from './components/SourceRelevance';
+import { ExamChecklist } from './components/ExamChecklist';
 import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy } from './services/openRouterService';
 import { ResearchResponse, StudyResult, StudyExplanation } from './types';
 
@@ -18,10 +19,49 @@ const App: React.FC = () => {
   const [medicationQuery, setMedicationQuery] = useState('');
   const [activeMode, setActiveMode] = useState<SearchMode>('discover');
 
+  // Dynamic Search Status
+  const [searchStatus, setSearchStatus] = useState("Iniciando análise...");
+
+  React.useEffect(() => {
+    if (loading) {
+      const statuses = [
+        "Acessando JAMA Network...",
+        "Verificando New England Journal of Medicine...",
+        "Consultando The Lancet...",
+        "Analisando Cochrane Library...",
+        "Buscando no PubMed & NIH...",
+        "Verificando SciELO...",
+        "Compilando Evidências..."
+      ];
+      let i = 0;
+      setSearchStatus(statuses[0]);
+      const interval = setInterval(() => {
+        i = (i + 1) % statuses.length;
+        setSearchStatus(statuses[i]);
+      }, 800);
+      return () => clearInterval(interval);
+    }
+  }, [loading]);
+
   // Modal State
   const [selectedStudy, setSelectedStudy] = useState<StudyResult | null>(null);
   const [explanation, setExplanation] = useState<StudyExplanation | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+
+  /* ... (rest of the file remains unchanged until loading UI block) ... */
+
+  {
+    loading && (
+      <div className="flex flex-col items-center justify-center py-24 animate-fade-in">
+        <div className="relative w-20 h-20 mb-8">
+          <div className="absolute inset-0 border-4 border-brand-100 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-brand-500 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        <p className="text-brand-600 font-bold text-lg animate-pulse text-center">{searchStatus}</p>
+        <p className="text-slate-400 text-xs mt-2 font-medium uppercase tracking-widest">Varredura em Tempo Real</p>
+      </div>
+    )
+  }
 
   const handleSearch = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -184,7 +224,7 @@ const App: React.FC = () => {
               <div className="absolute inset-0 border-4 border-brand-100 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-brand-500 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <p className="text-brand-600 font-bold text-lg animate-pulse text-center">IA analisando publicações médicas (2000-2025)...</p>
+            <p className="text-brand-600 font-bold text-lg animate-pulse text-center">{searchStatus}</p>
           </div>
         )}
 
@@ -205,19 +245,22 @@ const App: React.FC = () => {
         {data && !loading && (
           <div className="animate-fade-in space-y-16 pb-20">
 
+            {/* Diagnósticos em Destaque */}
+            <ExamChecklist studies={data.studies} />
+
             <div className="space-y-8">
               <div className="flex items-end justify-between px-2 border-b border-slate-200 pb-4">
                 <div>
                   <h3 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">
-                    {activeMode === 'discover' ? "Resultados da Busca" : "Análise de Eficácia"}
+                    {activeMode === 'discover' ? "Tratamentos & Terapias" : "Análise de Eficácia"}
                   </h3>
-                  <p className="text-slate-500 mt-1">Evidências científicas encontradas.</p>
+                  <p className="text-slate-500 mt-1">Intervenções terapêuticas identificadas.</p>
                 </div>
               </div>
 
-              {data.studies.length > 0 ? (
+              {data.studies.filter(s => s.type !== 'DIAGNOSIS').length > 0 ? (
                 <div className={`grid gap-6 ${activeMode === 'verify' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
-                  {data.studies.map((study, idx) => (
+                  {data.studies.filter(s => s.type !== 'DIAGNOSIS').map((study, idx) => (
                     <StudyCard
                       key={idx}
                       study={study}
@@ -229,13 +272,14 @@ const App: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
-                  <p className="text-slate-400 text-lg font-medium">Nenhum ensaio conclusivo encontrado.</p>
+                  <p className="text-slate-400 text-lg font-medium">Nenhum tratamento específico listado nesta seção.</p>
                 </div>
               )}
             </div>
 
             {data.sources.length > 0 && (
               <div className="glass p-8 rounded-3xl border border-white/50">
+                {/* ... existing source code ... */}
                 <h4 className="text-slate-900 font-bold text-lg mb-6 flex items-center">
                   <span className="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center mr-3">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>

@@ -27,7 +27,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
         <div className="p-10 flex-grow">
           <div className="flex items-center space-x-4 mb-8">
             <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-sm">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
             <span className="text-[13px] font-black text-amber-600 uppercase tracking-[0.2em]">
               Alerta de Evidência Científica
@@ -54,13 +54,23 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
       <div className={`p-10 flex-grow ${isWide ? 'md:w-2/3' : ''}`}>
         <div className="flex items-start justify-between mb-8">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="bg-slate-100 text-slate-400 text-[11px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-sm">
                 #{index + 1}
               </span>
               <span className={`text-[11px] font-black px-4 py-1.5 rounded-xl border uppercase tracking-[0.15em] shadow-sm ${sourceStyle}`}>
                 {study.fonte_origem || 'Artigo Peer-Reviewed'}
               </span>
+              {study.type === 'DIAGNOSIS' && (
+                <span className="bg-violet-100 text-violet-600 border border-violet-200 text-[11px] font-black px-4 py-1.5 rounded-xl uppercase tracking-[0.15em] shadow-sm">
+                  Diagnóstico
+                </span>
+              )}
+              {study.type === 'TREATMENT' && (
+                <span className="bg-emerald-100 text-emerald-600 border border-emerald-200 text-[11px] font-black px-4 py-1.5 rounded-xl uppercase tracking-[0.15em] shadow-sm">
+                  Tratamento
+                </span>
+              )}
             </div>
             <h3 className={`font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-tight mb-4 ${isWide ? 'text-4xl' : 'text-2xl line-clamp-2 min-h-[4rem]'}`}>
               {study.therapyName}
@@ -68,7 +78,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
             <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] line-clamp-1 opacity-60">{study.studyTitle}</p>
           </div>
         </div>
-        
+
         <div className="space-y-6">
           <div className="relative p-7 bg-blue-50/30 rounded-[2rem] border border-blue-100/30 transition-all duration-500 group-hover:bg-blue-50/50">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 rounded-l-[2rem]"></div>
@@ -82,16 +92,18 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
 
       <div className={`bg-slate-50/50 border-slate-100 flex flex-col justify-center px-10 py-10 ${isWide ? 'md:w-1/3 md:border-l' : 'border-t'}`}>
         <div className={`flex gap-8 mb-8 ${isWide ? 'flex-col items-center text-center' : 'justify-between'}`}>
-           <div title="Eficácia Estimada" className="flex flex-col items-center">
-             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Eficácia</span>
-             <span className="text-2xl font-black text-blue-600">📊 {study.estimatedEfficacy}%</span>
-           </div>
-           <div title="Participantes" className="flex flex-col items-center">
-             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amostra</span>
-             <span className="text-2xl font-black text-emerald-600">👥 {study.participants > 0 ? study.participants : 'N/A'}</span>
-           </div>
+          <div title={study.type === 'DIAGNOSIS' ? "Acurácia / Sensibilidade" : "Eficácia Estimada"} className="flex flex-col items-center">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+              {study.type === 'DIAGNOSIS' ? 'Rigor/Acurácia' : 'Eficácia'}
+            </span>
+            <span className="text-2xl font-black text-blue-600">📊 {study.estimatedEfficacy}%</span>
+          </div>
+          <div title="Participantes" className="flex flex-col items-center">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Amostra</span>
+            <span className="text-2xl font-black text-emerald-600">👥 {study.participants > 0 ? study.participants : 'N/A'}</span>
+          </div>
         </div>
-        <button 
+        <button
           onClick={() => onSelect(study)}
           className="w-full inline-flex items-center justify-center px-8 py-5 bg-white text-blue-600 border-2 border-blue-50 rounded-2xl text-xs font-black uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:shadow-2xl hover:shadow-blue-200 transition-all duration-300 active:scale-95 shadow-sm"
         >

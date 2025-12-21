@@ -12,44 +12,46 @@ const BASE_SOURCES = "site:jamanetwork.com OR site:nejm.org OR site:thelancet.co
 
 export const searchMedicalTrials = async (disease: string): Promise<ResearchResponse> => {
     const prompt = `
-    Atue como um pesquisador médico sênior global com acesso em tempo real à internet.
-    Realize uma busca CRÍTICA e RECENTE por ensaios clínicos e tratamentos validados para: "${disease}".
+    Atue como um pesquisador médico sênior.
+    Pesquise por "Tratamentos" e "Métodos de Diagnóstico" para a condição: "${disease}".
     
-    FONTES PRIORITÁRIAS (Busque nestes domínios, mas expanda para PubMed/SciELO se necessário):
-    ${BASE_SOURCES}
+    Fontes: ${BASE_SOURCES}
     
-    PERÍODO: 2000 a 2025 (Foco nos últimos 5 anos).
+    Objetivo: Retornar evidências divididas em duas categorias obrigatórias.
     
-    EXTRAÇÃO ESTRUTURADA DE DADOS:
-    Para cada estudo relevante encontrado, extraia os dados estritamente no formato JSON abaixo.
-    
-    CAMPOS OBRIGATÓRIOS:
-    1. "therapyName": Nome do Medicamento ou Terapia.
-    2. "studyTitle": Título exato do artigo.
-    3. "fonte_origem": Fonte/Journal (ex: JAMA, NEJM, PubMed).
-    4. "participants": Número de (N=...). Se não achar exato, estime baseado no abstrato.
-    5. "estimatedEfficacy": Valor 0-100 representando o sucesso/eficácia relatada.
-    6. "averageAge": Idade média dos participantes.
-    7. "mainResult": Resumo do resultado principal traduzido para Português.
-    8. "jamaLink": Link direto para o estudo se disponível, ou homepage do journal.
-
-    IMPORTANTE: Retorne APENAS o JSON válido, sem markdown code blocks (\`\`\`).
-    
-    Exemplo de Saída:
+    Formato de Saída (Exatamente este JSON):
     {
-      "studies": [
-        {
-          "therapyName": "Nome da Terapia",
-          "studyTitle": "Título do Estudo",
-          "fonte_origem": "JAMA",
-          "mainResult": "Resultado resumido...",
-          "jamaLink": "https://...",
-          "participants": 100,
-          "estimatedEfficacy": 85,
-          "averageAge": 60,
-          "isWarning": false,
-          "warningMessage": ""
-        }
+      "diagnostics": [
+         // Liste pelo menos 3 exames ou métodos diagnósticos (Sangue, Imagem, Genético, Clínico)
+         {
+            "therapyName": "Nome do Exame",
+            "type": "DIAGNOSIS",
+            "studyTitle": "Diretriz ou Estudo",
+            "fonte_origem": "Fonte",
+            "mainResult": "Acurácia/Sensibilidade...",
+            "jamaLink": "URL",
+            "participants": 0,
+            "estimatedEfficacy": 95, // Acurácia
+            "averageAge": 0,
+            "isWarning": false,
+            "warningMessage": ""
+         }
+      ],
+      "treatments": [
+         // Liste tratamentos relevantes (Medicamentos, Terapias)
+         {
+            "therapyName": "Nome do Tratamento",
+            "type": "TREATMENT",
+            "studyTitle": "Estudo...",
+            "fonte_origem": "Fonte",
+            "mainResult": "Resultado...",
+            "jamaLink": "URL",
+            "participants": 0,
+            "estimatedEfficacy": 0,
+            "averageAge": 0,
+            "isWarning": false,
+            "warningMessage": ""
+         }
       ]
     }
   `;
@@ -76,6 +78,7 @@ export const verifyMedicationEfficacy = async (disease: string, medication: stri
       "studies": [
         {
           "therapyName": "${medication}",
+          "type": "TREATMENT",
           "studyTitle": "...",
           "fonte_origem": "...",
           "mainResult": "...",
@@ -131,10 +134,21 @@ async function executeOpenRouterSearch(prompt: string): Promise<ResearchResponse
         // Limpeza básica para garantir JSON válido (remover markdown se o modelo teimar em enviar)
         const cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        let parsedData: { studies: StudyResult[] } = { studies: [] };
+        let parsedData: any = {};
+        let studies: StudyResult[] = [];
 
         try {
             parsedData = JSON.parse(cleanContent);
+
+            // Lógica para unificar formatos (Novo "diagnostics/treatments" vs Antigo "studies")
+            if (parsedData.diagnostics || parsedData.treatments) {
+                const diag = parsedData.diagnostics || [];
+                const treat = parsedData.treatments || [];
+                studies = [...diag, ...treat];
+            } else if (parsedData.studies) {
+                studies = parsedData.studies;
+            }
+
         } catch (e) {
             console.error("Failed to parse JSON response", cleanContent);
             throw new Error("Falha ao processar dados da IA. Formato inválido.");
@@ -145,14 +159,35 @@ async function executeOpenRouterSearch(prompt: string): Promise<ResearchResponse
         // O modelo Sonar geralmente integra links no texto ou citations field.
         // Na OpenRouter, citations vêm as vezes. Vamos fazer um fallback simples.
 
-        const sources = parsedData.studies
-            .filter(s => s.jamaLink && s.jamaLink.startsWith('http'))
-            .map(s => ({ title: s.fonte_origem || "Fonte", uri: s.jamaLink }));
+        // Extração Inteligente de Citações (Perplexity/OpenRouter)
+        let extractedSources: { title: string, uri: string }[] = [];
+
+        // 1. Tentar extrair do campo oficial 'citations' se a API retornar (comum em modelos Perplexity)
+        // @ts-ignore - citations pode não estar no tipo padrão mas vem na resposta
+        if (json.citations && Array.isArray(json.citations)) {
+            extractedSources = json.citations.map((url: string, index: number) => ({
+                title: new URL(url).hostname.replace('www.', ''),
+                uri: url
+            }));
+        }
+
+        // 2. Se não houver citations nativas, pegar dos links retornados no JSON estruturado pelo modelo
+        if (extractedSources.length === 0) {
+            extractedSources = studies
+                .filter(s => s.jamaLink && s.jamaLink.startsWith('http'))
+                .map(s => ({
+                    title: s.fonte_origem || new URL(s.jamaLink).hostname.replace('www.', ''),
+                    uri: s.jamaLink
+                }));
+        }
+
+        // 3. Remover duplicatas
+        const uniqueSources = Array.from(new Map(extractedSources.map(item => [item.uri, item])).values());
 
         return {
-            studies: parsedData.studies || [],
+            studies: studies || [],
             rawText: content,
-            sources: sources.length > 0 ? sources : [{ title: "Perplexity Search", uri: "https://www.perplexity.ai" }]
+            sources: uniqueSources.length > 0 ? uniqueSources : [] // Retornar vazio se não tiver, ao invés de link genérico
         };
 
     } catch (error) {
