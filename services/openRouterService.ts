@@ -8,14 +8,14 @@ const SITE_NAME = "MedEvidência Pro";
 // Using Perplexity Sonar via OpenRouter for live internet access
 const MODEL = "perplexity/sonar";
 
-const BASE_SOURCES = "site:jamanetwork.com OR site:nejm.org OR site:thelancet.com OR site:cochranelibrary.com";
+const BASE_SOURCES = "site:jamanetwork.com OR site:nejm.org OR site:thelancet.com OR site:cochranelibrary.com OR site:nih.gov OR site:scielo.br OR site:bmj.com";
 
 export const searchMedicalTrials = async (disease: string): Promise<ResearchResponse> => {
     const prompt = `
     Atue como um pesquisador médico sênior global com acesso em tempo real à internet.
     Realize uma busca CRÍTICA e RECENTE por ensaios clínicos e tratamentos validados para: "${disease}".
     
-    FONTES PRIORITÁRIAS (Busque ativamente nestes domínios):
+    FONTES PRIORITÁRIAS (Busque nestes domínios, mas expanda para PubMed/SciELO se necessário):
     ${BASE_SOURCES}
     
     PERÍODO: 2000 a 2025 (Foco nos últimos 5 anos).
@@ -26,7 +26,7 @@ export const searchMedicalTrials = async (disease: string): Promise<ResearchResp
     CAMPOS OBRIGATÓRIOS:
     1. "therapyName": Nome do Medicamento ou Terapia.
     2. "studyTitle": Título exato do artigo.
-    3. "fonte_origem": Fonte/Journal (ex: JAMA, NEJM).
+    3. "fonte_origem": Fonte/Journal (ex: JAMA, NEJM, PubMed).
     4. "participants": Número de (N=...). Se não achar exato, estime baseado no abstrato.
     5. "estimatedEfficacy": Valor 0-100 representando o sucesso/eficácia relatada.
     6. "averageAge": Idade média dos participantes.
@@ -62,13 +62,14 @@ export const verifyMedicationEfficacy = async (disease: string, medication: stri
     Atue como um Verificador de Evidência Médica rigoroso com acesso à internet.
     Verifique a eficácia do medicamento/terapia "${medication}" especificamente para a condição "${disease}".
     
-    Busque por ensaios clínicos randomizados e revisões sistemáticas em:
-    ${BASE_SOURCES}
+    INSTRUÇÕES DE BUSCA:
+    1. Busque primeiro ensaios clínicos randomizados e revisões sistemáticas em: ${BASE_SOURCES}
+    2. IMPORTANTE: Se o medicamento for comum em regiões específicas (ex: Dipirona no Brasil/Europa) mas restrito nos EUA, EXPANDA a busca para artigos no PubMed, SciELO, European Medicines Agency ou diretrizes clínicas locais confiáveis.
     
     REGRAS DE RESPOSTA:
     1. Se encontrar evidências robustas: Retorne o JSON com os dados do estudo.
-    2. Se NÃO encontrar evidência ou se for inconclusivo:
-       Retorne o JSON com um item no array "studies" onde "isWarning": true e "warningMessage": "Explicação detalhada da falta de evidência ou resultados inconclusivos...".
+    2. Se NÃO encontrar evidência ou se for inconclusivo MESMO APÓS expandir a busca:
+       Retorne o JSON com um item no array "studies" onde "isWarning": true e "warningMessage": "Explicação detalhada...".
     
     JSON Template (retorne APENAS o JSON cru, sem markdown):
     {
