@@ -18,13 +18,18 @@ O objetivo é fornecer insights rápidos e baseados em dados sobre a eficácia d
 - **📊 Análise Visual:** Gráficos interativos que mostram a eficácia estimada, número de participantes e relevância dos estudos encontrados.
 - **🧠 Explicações via IA:** O sistema gera explicações detalhadas em português, traduzindo "tecniquês" médico para protocolos práticos, pontos de atenção e perfis de pacientes indicados.
 - **🔗 Rastreabilidade:** Todos os dados são linkados diretamente às fontes originais para verificação.
-- **📑 Geração de Relatórios:** (Em desenvolvimento) Exportação de análises para PDF.
+- **� Análise de Interações Medicamentosas:** Sistema de análise de segurança em duas etapas:
+  - **Farmacêutico Clínico:** Identifica interações medicamentosas, duplicidades terapêuticas e riscos farmacológicos.
+  - **Médico Sênior:** Valida clinicamente os achados e fornece um parecer médico consolidado.
+- **📑 Relatórios Profissionais em PDF:** Geração de documentos formais para impressão e discussão clínica, incluindo perfil do paciente, tabela de medicamentos, alertas de interação baseados em evidência e o parecer médico final.
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
 - **Estilização:** [Tailwind CSS](https://tailwindcss.com/)
-- **Inteligência Artificial:** [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5/3.0 Models)
+- **Inteligência Artificial:** 
+  - [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5/3.0 Models)
+  - **OpenRouter API** (Perplexity Sonar Online para pesquisa em tempo real, Modelos Clínicos para análise)
 - **Visualização de Dados:** [Recharts](https://recharts.org/)
 - **Utilitários:** jsPDF
 
@@ -36,7 +41,9 @@ Siga os passos abaixo para rodar o projeto em sua máquina.
 
 - Node.js (v18 ou superior)
 - npm ou yarn
-- Uma chave de API do [Google AI Studio](https://aistudio.google.com/)
+- Chaves de API:
+  - [Google AI Studio](https://aistudio.google.com/)
+  - [OpenRouter](https://openrouter.ai/)
 
 ### Passo a Passo
 
@@ -52,11 +59,12 @@ Siga os passos abaixo para rodar o projeto em sua máquina.
    ```
 
 3. **Configuração de Ambiente**
-   Crie um arquivo `.env.local` na raiz do projeto. Adicione sua chave de API do Gemini:
+   Crie um arquivo `.env` ou `.env.local` na raiz do projeto. Adicione suas chaves:
    ```env
-   GEMINI_API_KEY=sua_chave_api_aqui
+   GEMINI_API_KEY=sua_chave_gemini_aqui
+   OPENROUTER_API_KEY=sua_chave_openrouter_aqui
    ```
-   > **Nota:** A aplicação utiliza um proxy no `vite.config.ts` para injetar essa variável com segurança. Certifique-se de usar o nome exato `GEMINI_API_KEY`.
+   > **Nota:** A aplicação utiliza um proxy no `vite.config.ts` para injetar essas variáveis com segurança. Certifique-se de usar os nomes exatos.
 
 4. **Execute o servidor de desenvolvimento**
    ```bash
