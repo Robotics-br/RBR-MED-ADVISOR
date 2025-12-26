@@ -32,3 +32,57 @@ export interface ResearchResponse {
   rawText: string;
   sources: GroundingSource[];
 }
+
+export interface Medication {
+  name: string;
+  dosage: string;
+  form: string;
+  frequency: string;
+  schedule: string;
+  duration?: string;
+  usageType: 'CONTINUOUS' | 'RECENT' | 'SOS';
+  reason?: string; // Indicação/Motivo do uso
+}
+
+export interface PatientProfile {
+  age: string;
+  gender: string;
+  weight: string;
+  diseases: string;
+  otherSubstances: string;
+  symptoms: string;
+  medications: Medication[];
+}
+
+export interface InteractionResult {
+  pair: string[];
+  severity: 'HIGH' | 'MODERATE' | 'LOW' | 'UNKNOWN';
+  description: string;
+  management: string;
+}
+
+export interface DiseaseRisk {
+  disease: string;
+  relatedMedication: string;
+  riskLevel: 'HIGH' | 'MODERATE' | 'LOW';
+  description: string;
+  recommendation: string;
+}
+
+export interface SubstanceInteraction {
+  substance: string;
+  medication: string;
+  effect: string;
+  recommendation: string;
+}
+
+export interface DrugInteractionAnalysis {
+  hasInteractions: boolean;
+  drugInteractions: InteractionResult[];
+  diseaseRisks: DiseaseRisk[];
+  substanceInteractions: SubstanceInteraction[];
+  generalWarnings: string[];
+  scheduleSuggestions: string; // Markdown text
+  symptomAnalysis: string; // Analysis of reported symptoms vs side effects
+  physicianAnalysis: string; // Senior Physician's clinical validation report
+}

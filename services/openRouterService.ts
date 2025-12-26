@@ -1,5 +1,5 @@
 
-import { ResearchResponse, StudyResult, StudyExplanation } from "../types";
+import { ResearchResponse, StudyResult, StudyExplanation, PatientProfile, DrugInteractionAnalysis } from "../types";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 const SITE_URL = "http://localhost:3000"; // Site URL for OpenRouter rankings
@@ -245,5 +245,124 @@ export const explainStudy = async (study: StudyResult): Promise<StudyExplanation
     } catch (e) {
         console.error("Erro na explicação", e);
         throw new Error("Falha ao processar explicação da IA.");
+    }
+};
+
+export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<DrugInteractionAnalysis> => {
+    const prompt = `
+    Realize uma análise clínica em dois estágios (Pipeline) para o seguinte paciente.
+
+    DADOS DO PACIENTE:
+    - Idade: ${profile.age}
+    - Gênero: ${profile.gender}
+    - Peso: ${profile.weight}
+    
+    LISTA DE MEDICAMENTOS:
+    ${profile.medications.map((m, i) => `
+    ${i + 1}. ${m.name}
+       - Dosagem: ${m.dosage}
+       - Forma: ${m.form}
+       - Frequência: ${m.frequency}
+       - Horário: ${m.schedule}
+       - Tempo de uso: ${m.duration || 'Não informado'}
+       - Tipo de Uso: ${m.usageType === 'CONTINUOUS' ? 'CONTÍNUO' : m.usageType === 'RECENT' ? 'INÍCIO RECENTE' : 'SOS / AGUDO'}
+       - Indicação/Motivo: ${m.reason || 'Não informado'}
+    `).join('')}
+
+    CONDIÇÕES DE SAÚDE:
+    ${profile.diseases}
+
+    OUTRAS SUBSTÂNCIAS:
+    ${profile.otherSubstances}
+
+    SINTOMAS RELATADOS:
+    ${profile.symptoms}
+
+    ---
+    
+    ETAPA 1: PERSONA FARMACÊUTICO CLÍNICO (ANÁLISE TÉCNICA)
+    Responsabilidade: Triagem técnica, farmacocinética, interações e segurança. NÃO DIAGNOSTICA.
+    Tarefas:
+    1. Identificar interações (Medicamento-Medicamento, Medicamento-Alimento/Suplemento).
+    2. Analisar riscos com comorbidades (Ex: AINEs em Hipertensos).
+    3. Classificar severidade técnica.
+    4. Sugerir otimização de horários (Cronofarmacologia).
+
+    ETAPA 2: PERSONA MÉDICO SÊNIOR (VALIDAÇÃO CLÍNICA)
+    Responsabilidade: Visão global, relevância clínica e conduta.
+    Tarefas:
+    1. Avaliar o impacto real das interações levantadas pelo farmacêutico no contexto deste paciente específico.
+    2. Correlacionar sintomas relatados com possíveis efeitos adversos ou falta de eficácia.
+    3. Gerar um PARECER MÉDICO ESTRUTURADO com orientações (sem prescrever).
+
+    ---
+
+    RETORNE APENAS JSON VÁLIDO (SEM MARKDOWN) COM A SEGUINTE ESTRUTURA FINAL:
+    {
+      "hasInteractions": boolean, // Se houver riscos relevantes
+      "drugInteractions": [ // Preenchido pela Persona Farmacêutico
+        {
+          "pair": ["Med A", "Med B"],
+          "severity": "HIGH" | "MODERATE" | "LOW",
+          "description": "Explicação técnica farmacêutica...",
+          "management": "Sugestão técnica de manejo (monitoramento, espaçamento)..."
+        }
+      ],
+      "diseaseRisks": [ // Preenchido pela Persona Farmacêutico
+        {
+          "disease": "Nome da Doença",
+          "relatedMedication": "Nome do Medicamento",
+          "riskLevel": "HIGH" | "MODERATE" | "LOW",
+          "description": "Explicação do risco fisiológico...",
+          "recommendation": "Cuidado sugerido..."
+        }
+      ],
+      "substanceInteractions": [ // Preenchido pela Persona Farmacêutico
+        {
+          "substance": "Ex: Álcool ou Alimento",
+          "medication": "Nome do Medicamento",
+          "effect": "Descrição da interação...",
+          "recommendation": "Orientação..."
+        }
+      ],
+      "symptomAnalysis": "Texto corrido (Markdown) onde o MÉDICO avalia se os sintomas do paciente ('${profile.symptoms}') podem ser iatrogênicos, falha terapêutica ou evolução da doença.",
+      "physicianAnalysis": "Texto corrido (Markdown) contendo o PARECER MÉDICO FINAL. Deve conter: 1. Impreção Geral; 2. Validação dos Riscos (quais realmente importam); 3. Orientações de Conduta (ex: 'Discutir com seu médico a troca de X', 'Monitorar pressão arterial'). Use tom ético, educacional e seguro.",
+      "generalWarnings": ["Aviso curto 1", "Aviso curto 2"],
+      "scheduleSuggestions": "Texto explicativo (Markdown) feito pelo FARMACÊUTICO com sugestão de horários otimizados."
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "perplexity/sonar", // Modelo capaz de reasoning e busca
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You represent a Clinical Board composed of a Senior Pharmacist and a Senior Physician. Return strictly valid JSON."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.2
+            })
+        });
+
+        const json = await response.json();
+        const cleanContent = (json.choices?.[0]?.message?.content || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanContent) as DrugInteractionAnalysis;
+    } catch (e) {
+        console.error("Erro na análise de interações", e);
+        throw new Error("Falha ao analisar interações medicamentosas.");
     }
 };

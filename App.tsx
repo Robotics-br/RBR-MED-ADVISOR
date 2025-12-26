@@ -9,7 +9,9 @@ import { ExamChecklist } from './components/ExamChecklist';
 import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy } from './services/openRouterService';
 import { ResearchResponse, StudyResult, StudyExplanation } from './types';
 
-type SearchMode = 'discover' | 'verify';
+import { DrugInteraction } from './components/DrugInteraction';
+
+type SearchMode = 'discover' | 'verify' | 'interactions';
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -67,6 +69,7 @@ const App: React.FC = () => {
     if (e) e.preventDefault();
     if (!query.trim()) return;
     if (activeMode === 'verify' && !medicationQuery.trim()) return;
+    // Don't run this search if mode is interactions
 
     setLoading(true);
     setError(null);
@@ -76,10 +79,10 @@ const App: React.FC = () => {
       let result;
       if (activeMode === 'discover') {
         result = await searchMedicalTrials(query);
-      } else {
+      } else if (activeMode === 'verify') {
         result = await verifyMedicationEfficacy(query, medicationQuery);
       }
-      setData(result);
+      if (result) setData(result);
     } catch (err) {
       setError("Ocorreu um erro ao realizar a pesquisa. Verifique sua conexão ou tente novamente.");
       console.error(err);
@@ -134,11 +137,11 @@ const App: React.FC = () => {
           </p>
 
           {/* Tabs */}
-          <div className="flex justify-center mb-10">
-            <div className="glass p-1.5 rounded-full inline-flex shadow-sm">
+          <div className="flex justify-center mb-10 overflow-x-auto pb-4 sm:pb-0">
+            <div className="glass p-1.5 rounded-full inline-flex shadow-sm min-w-max">
               <button
                 onClick={() => setActiveMode('discover')}
-                className={`px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'discover'
+                className={`px-6 sm:px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'discover'
                   ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
                   : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
                   }`}
@@ -147,75 +150,88 @@ const App: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveMode('verify')}
-                className={`px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'verify'
+                className={`px-6 sm:px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'verify'
                   ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
                   : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
                   }`}
               >
                 Verificar Eficácia
               </button>
+              <button
+                onClick={() => setActiveMode('interactions')}
+                className={`px-6 sm:px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'interactions'
+                  ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
+                  : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
+                  }`}
+              >
+                Interação Medicamentosa
+              </button>
             </div>
           </div>
 
-          <div className="max-w-3xl mx-auto">
-            <form onSubmit={handleSearch} className="glass p-8 sm:p-10 rounded-[2rem] shadow-card relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 via-indigo-500 to-brand-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          {activeMode === 'interactions' ? (
+            <DrugInteraction />
+          ) : (
+            <div className="max-w-3xl mx-auto">
+              <form onSubmit={handleSearch} className="glass p-8 sm:p-10 rounded-[2rem] shadow-card relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 via-indigo-500 to-brand-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-              <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-2 text-left">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    Enfermidade ou Condição
-                  </label>
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Ex: Alzheimer, Artrite Reumatoide..."
-                    className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
-                    disabled={loading}
-                  />
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="space-y-2 text-left">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                      Enfermidade ou Condição
+                    </label>
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Ex: Alzheimer, Artrite Reumatoide..."
+                      className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className={`space-y-2 text-left transition-all duration-500 ${activeMode === 'verify' ? 'opacity-100 max-h-32' : 'opacity-30 max-h-0 overflow-hidden'}`}>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                      Nome do Medicamento ou Terapia
+                    </label>
+                    <input
+                      type="text"
+                      value={medicationQuery}
+                      onChange={(e) => setMedicationQuery(e.target.value)}
+                      placeholder="Ex: Lecanemabe..."
+                      className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+                      disabled={loading || activeMode === 'discover'}
+                    />
+                  </div>
                 </div>
 
-                <div className={`space-y-2 text-left transition-all duration-500 ${activeMode === 'verify' ? 'opacity-100 max-h-32' : 'opacity-30 max-h-0 overflow-hidden'}`}>
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                    Nome do Medicamento ou Terapia
-                  </label>
-                  <input
-                    type="text"
-                    value={medicationQuery}
-                    onChange={(e) => setMedicationQuery(e.target.value)}
-                    placeholder="Ex: Lecanemabe..."
-                    className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
-                    disabled={loading || activeMode === 'discover'}
-                  />
+                <div className="mt-8">
+                  <button
+                    type="submit"
+                    disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
+                    className="w-full flex items-center justify-center px-8 py-5 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-brand-600 hover:shadow-brand-500/25 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                  >
+                    {loading ? (
+                      <div className="flex items-center space-x-3">
+                        <svg className="animate-spin h-5 w-5 text-white/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Analisando Bases de Dados...</span>
+                      </div>
+                    ) : (
+                      <span>{activeMode === 'discover' ? 'Descobrir Avanços' : 'Verificar Evidência'}</span>
+                    )}
+                  </button>
                 </div>
-              </div>
+              </form>
 
               <div className="mt-8">
-                <button
-                  type="submit"
-                  disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
-                  className="w-full flex items-center justify-center px-8 py-5 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-brand-600 hover:shadow-brand-500/25 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
-                >
-                  {loading ? (
-                    <div className="flex items-center space-x-3">
-                      <svg className="animate-spin h-5 w-5 text-white/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Analisando Bases de Dados...</span>
-                    </div>
-                  ) : (
-                    <span>{activeMode === 'discover' ? 'Descobrir Avanços' : 'Verificar Evidência'}</span>
-                  )}
-                </button>
+                {!data && !loading && <SourceRelevance />}
               </div>
-            </form>
-
-            <div className="mt-8">
-              {!data && !loading && <SourceRelevance />}
             </div>
-          </div>
+          )}
         </section>
 
         {loading && (
