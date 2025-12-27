@@ -4,8 +4,27 @@ import { Medication, PatientProfile, DrugInteractionAnalysis } from '../types';
 import { analyzeDrugInteractions } from '../services/openRouterService';
 import { generateInteractionPDF } from '../services/pdfService';
 
+const getSpecialistForDisease = (disease: string): string => {
+    const d = disease.toLowerCase();
+    if (d.includes('diabetes') || d.includes('tireoide') || d.includes('hipotireoidismo') || d.includes('osteoporose')) return 'Endocrinologista';
+    if (d.includes('hipertensão') || d.includes('coronariana') || d.includes('cardíaca') || d.includes('dislipidemia')) return 'Cardiologista';
+    if (d.includes('avc') || d.includes('demência') || d.includes('esclerose') || d.includes('enxaqueca') || d.includes('neuropatia')) return 'Neurologista';
+    if (d.includes('depressão') || d.includes('ansiedade')) return 'Psiquiatra';
+    if (d.includes('asma') || d.includes('dpoc') || d.includes('sono')) return 'Pneumologista';
+    if (d.includes('refluxo') || d.includes('gastrite') || d.includes('hepática')) return 'Gastroenterologista';
+    if (d.includes('renal')) return 'Nefrologista';
+    if (d.includes('artrose') || d.includes('lombar')) return 'Ortopedista';
+    if (d.includes('artrite') || d.includes('fibromialgia')) return 'Reumatologista';
+    if (d.includes('câncer')) return 'Oncologista';
+    if (d.includes('sinusite') || d.includes('zumbido')) return 'Otorrinolaringologista';
+    if (d.includes('falciforme')) return 'Hematologista';
+    if (d.includes('geriatra')) return 'Geriatra';
+    return 'Clínico Geral';
+};
+
 export const DrugInteraction: React.FC = () => {
     const [loading, setLoading] = useState(false);
+    const [currentPersona, setCurrentPersona] = useState<string>('Farmacêutico');
     const [result, setResult] = useState<DrugInteractionAnalysis | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +39,69 @@ export const DrugInteraction: React.FC = () => {
         medications: []
     });
 
+    const commonDiseases = [
+        "Acidente Vascular Cerebral (AVC)", "Anemia Falciforme", "Apneia Obstrutiva do Sono", "Arritmia Cardíaca", "Artrite Gotosa", "Artrose (Osteoartrite)", "Asma",
+        "Câncer", "Cirrose hepática", "Demência", "Depressão", "Diabetes Gestacional", "Diabetes tipo 1 (autoimune)", "Diabetes tipo 2 (comum)", "Diabetes-Pré",
+        "Dislipidemia (Colesterol alto)", "Distúrbios da Tireoide", "Doença Arterial Coronariana", "Doença do Refluxo Gastroesofágico",
+        "Doença Pulmonar Obstrutiva Crônica (DPOC)", "Doença Renal Crônica", "Dor Lombar Crônica", "Enxaqueca Crônica",
+        "Esclerose Múltipla", "Fibromialgia", "Gastrite",
+        "Hipertensão Arterial Sistêmica", "Hipotireoidismo", "Insuficiência Cardíaca", "Neuropatia periférica",
+        "Obesidade", "Osteoporose", "Sinusite Crônica", "Transtornos de Ansiedade", "Zumbido no ouvido (tinnitus)"
+    ];
+
+    const [selectedDiseases, setSelectedDiseases] = useState<string[]>([]);
+    const [otherDiseasesList, setOtherDiseasesList] = useState<string[]>([]);
+    const [otherDiseaseInput, setOtherDiseaseInput] = useState('');
+
+    // Substances State
+    const [substancesList, setSubstancesList] = useState<string[]>([]);
+    const [substanceInput, setSubstanceInput] = useState('');
+
+    // Sync state with profile.diseases
+    React.useEffect(() => {
+        const all = [...selectedDiseases, ...otherDiseasesList];
+        setProfile(prev => ({ ...prev, diseases: all.join(', ') }));
+    }, [selectedDiseases, otherDiseasesList]);
+
+    // Sync state with profile.otherSubstances
+    React.useEffect(() => {
+        setProfile(prev => ({ ...prev, otherSubstances: substancesList.join(', ') }));
+    }, [substancesList]);
+
+    const toggleDisease = (disease: string) => {
+        setSelectedDiseases(prev =>
+            prev.includes(disease)
+                ? prev.filter(d => d !== disease)
+                : [...prev, disease]
+        );
+    };
+
+    // Cycling through personas during loading
+    React.useEffect(() => {
+        if (!loading) return;
+
+        const specialists = [
+            ...selectedDiseases.map(getSpecialistForDisease),
+            ...otherDiseasesList.map(getSpecialistForDisease),
+            'Farmacêutico Clínico',
+            'Médico Sênior'
+        ];
+        // Unique specialists
+        const uniqueSpecialists = Array.from(new Set(specialists));
+
+        let i = 0;
+        setCurrentPersona(uniqueSpecialists[0]);
+
+        const interval = setInterval(() => {
+            i = (i + 1) % uniqueSpecialists.length;
+            setCurrentPersona(uniqueSpecialists[i]);
+        }, 2500);
+
+        return () => clearInterval(interval);
+    }, [loading, selectedDiseases, otherDiseasesList]);
+
     // Temporary state for adding a medication
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [currentMed, setCurrentMed] = useState<Medication>({
         name: '',
         dosage: '',
@@ -34,10 +115,42 @@ export const DrugInteraction: React.FC = () => {
 
     const handleAddMed = () => {
         if (!currentMed.name) return;
-        setProfile(prev => ({
-            ...prev,
-            medications: [...prev.medications, currentMed]
-        }));
+
+        if (editingIndex !== null) {
+            // Update existing
+            setProfile(prev => {
+                const updated = [...prev.medications];
+                updated[editingIndex] = currentMed;
+                return { ...prev, medications: updated };
+            });
+            setEditingIndex(null);
+        } else {
+            // Add new
+            setProfile(prev => ({
+                ...prev,
+                medications: [...prev.medications, currentMed]
+            }));
+        }
+
+        setCurrentMed({
+            name: '',
+            dosage: '',
+            form: '',
+            frequency: '',
+            schedule: '',
+            duration: '',
+            usageType: 'CONTINUOUS',
+            reason: ''
+        });
+    };
+
+    const handleEditMed = (index: number) => {
+        setCurrentMed(profile.medications[index]);
+        setEditingIndex(index);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingIndex(null);
         setCurrentMed({
             name: '',
             dosage: '',
@@ -58,7 +171,12 @@ export const DrugInteraction: React.FC = () => {
     };
 
     const handleAnalyze = async () => {
-        /* ... existing function ... */
+        if (!profile.age || !profile.gender || !profile.weight) {
+            setError("Por favor, preencha Idade, Gênero e Peso do paciente.");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         if (profile.medications.length === 0) {
             setError("Adicione pelo menos um medicamento para análise.");
             return;
@@ -146,22 +264,115 @@ export const DrugInteraction: React.FC = () => {
                             </h3>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Doenças / Condições</label>
-                                    <textarea
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none h-24 text-sm"
-                                        value={profile.diseases}
-                                        onChange={e => setProfile({ ...profile, diseases: e.target.value })}
-                                        placeholder="Ex: Hipertensão, Diabetes Tipo 2..."
-                                    />
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-left">Principais Comorbidades</label>
+                                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar border border-slate-100 p-2 rounded-xl bg-slate-50 text-left">
+                                        {commonDiseases.map(disease => (
+                                            <label key={disease} className="flex items-start space-x-2 cursor-pointer p-2 rounded hover:bg-white hover:shadow-sm transition-all">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDiseases.includes(disease)}
+                                                    onChange={() => toggleDisease(disease)}
+                                                    className="mt-1 rounded text-purple-600 focus:ring-purple-500 border-gray-300"
+                                                />
+                                                <span className="text-sm text-slate-700">{disease}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="mt-3">
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Outras Comorbidades (Opcional)</label>
+                                        <div className="flex gap-2 mb-3">
+                                            <input
+                                                type="text"
+                                                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                                                value={otherDiseaseInput}
+                                                onChange={e => setOtherDiseaseInput(e.target.value)}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter' && otherDiseaseInput.trim()) {
+                                                        setOtherDiseasesList([...otherDiseasesList, otherDiseaseInput.trim()]);
+                                                        setOtherDiseaseInput('');
+                                                    }
+                                                }}
+                                                placeholder="Digite e pressione Enter..."
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    if (otherDiseaseInput.trim()) {
+                                                        setOtherDiseasesList([...otherDiseasesList, otherDiseaseInput.trim()]);
+                                                        setOtherDiseaseInput('');
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-bold hover:bg-purple-200 transition-colors"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+
+                                        {/* Other Diseases List */}
+                                        <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-slate-50 border border-slate-100 rounded-xl">
+                                            {otherDiseasesList.length === 0 && (
+                                                <span className="text-xs text-slate-400 italic p-1">Nenhuma condição extra adicionada</span>
+                                            )}
+                                            {otherDiseasesList.map((disease, idx) => (
+                                                <span key={idx} className="flex items-center px-3 py-1 bg-white border border-purple-100 rounded-full text-sm text-slate-700 shadow-sm">
+                                                    {disease}
+                                                    <button
+                                                        onClick={() => setOtherDiseasesList(otherDiseasesList.filter((_, i) => i !== idx))}
+                                                        className="ml-2 text-slate-400 hover:text-red-500"
+                                                    >
+                                                        &times;
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Outras Substâncias</label>
-                                    <textarea
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none h-20 text-sm"
-                                        value={profile.otherSubstances}
-                                        onChange={e => setProfile({ ...profile, otherSubstances: e.target.value })}
-                                        placeholder="Ex: Álcool socialmente, Multivitamínico..."
-                                    />
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Suplementos e Outras Substâncias</label>
+                                    <div className="flex gap-2 mb-3">
+                                        <input
+                                            type="text"
+                                            className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm"
+                                            value={substanceInput}
+                                            onChange={e => setSubstanceInput(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && substanceInput.trim()) {
+                                                    setSubstancesList([...substancesList, substanceInput.trim()]);
+                                                    setSubstanceInput('');
+                                                }
+                                            }}
+                                            placeholder="Ex: Vitamina D, Creatina, Café..."
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                if (substanceInput.trim()) {
+                                                    setSubstancesList([...substancesList, substanceInput.trim()]);
+                                                    setSubstanceInput('');
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-bold hover:bg-purple-200 transition-colors"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+
+                                    {/* Substances List */}
+                                    <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-slate-50 border border-slate-100 rounded-xl">
+                                        {substancesList.length === 0 && (
+                                            <span className="text-xs text-slate-400 italic p-1">Nenhuma substância adicionada</span>
+                                        )}
+                                        {substancesList.map((sub, idx) => (
+                                            <span key={idx} className="flex items-center px-3 py-1 bg-white border border-purple-100 rounded-full text-sm text-slate-700 shadow-sm">
+                                                {sub}
+                                                <button
+                                                    onClick={() => setSubstancesList(substancesList.filter((_, i) => i !== idx))}
+                                                    className="ml-2 text-slate-400 hover:text-red-500"
+                                                >
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sintomas/Queixas</label>
@@ -243,7 +454,7 @@ export const DrugInteraction: React.FC = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Frequência</label>
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Frequência - A cada</label>
                                         <select
                                             className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                             value={currentMed.frequency}
@@ -265,6 +476,7 @@ export const DrugInteraction: React.FC = () => {
                                             onChange={e => setCurrentMed({ ...currentMed, schedule: e.target.value })}
                                         >
                                             <option value="">Selecione...</option>
+                                            <option value="Em Jejum">Em Jejum</option>
                                             <option value="Manhã">Manhã</option>
                                             <option value="Tarde">Tarde</option>
                                             <option value="Noite">Noite</option>
@@ -306,13 +518,22 @@ export const DrugInteraction: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-end">
+                                <div className="flex items-center justify-end space-x-3">
+                                    {editingIndex !== null && (
+                                        <button
+                                            onClick={handleCancelEdit}
+                                            className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    )}
                                     <button
                                         onClick={handleAddMed}
                                         disabled={!currentMed.name}
-                                        className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className={`px-6 py-2 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                                            ${editingIndex !== null ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
                                     >
-                                        Adicionar Medicamento
+                                        {editingIndex !== null ? 'Atualizar Medicamento' : 'Adicionar Medicamento'}
                                     </button>
                                 </div>
                             </div>
@@ -339,12 +560,22 @@ export const DrugInteraction: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => handleRemoveMed(idx)}
-                                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => handleEditMed(idx)}
+                                                    className="p-2 text-slate-300 hover:text-blue-500 transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRemoveMed(idx)}
+                                                    className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                                    title="Remover"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 )}
@@ -354,16 +585,38 @@ export const DrugInteraction: React.FC = () => {
                 </div>
             )}
 
-            {/* General Actions */}
+            {/* General Actions & Loading State */}
             {!result && (
-                <div className="flex justify-center pb-20">
-                    <button
-                        onClick={handleAnalyze}
-                        disabled={loading || profile.medications.length === 0}
-                        className="px-12 py-4 bg-slate-900 text-white rounded-full font-bold text-lg hover:bg-blue-600 hover:shadow-xl hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? "Realizando Análise Clínica..." : "Analisar Interações"}
-                    </button>
+                <div className="flex justify-center pb-20 mt-8">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in duration-300">
+                            <div className="relative w-24 h-24">
+                                <svg className="animate-spin w-full h-full text-slate-200" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-2xl">💊</span>
+                                </div>
+                            </div>
+                            <div className="text-center">
+                                <h4 className="text-lg font-bold text-slate-700">Analisando: <span className="text-blue-600">{currentPersona}</span></h4>
+                                <p className="text-sm text-slate-500">Junta Médica em conferência...</p>
+                                <div className="mt-2 text-[10px] font-bold text-slate-300 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100 italic">
+                                    Simulando parecer do especialista (10+ anos exp)
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleAnalyze}
+                            disabled={profile.medications.length === 0}
+                            className="px-12 py-4 bg-slate-900 text-white rounded-full font-bold text-lg hover:bg-blue-600 hover:shadow-xl hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                        >
+                            <span>Analisar Interações</span>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                    )}
                 </div>
             )}
 

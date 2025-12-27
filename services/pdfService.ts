@@ -48,7 +48,8 @@ export const generateInteractionPDF = (profile: PatientProfile, analysis: DrugIn
     doc.setFont('helvetica', 'normal');
     const patientData = [
         [`Idade: ${profile.age}`, `Gênero: ${profile.gender}`, `Peso: ${profile.weight}`],
-        [`Condições: ${profile.diseases || 'Não relatado'}`]
+        [`Condições: ${profile.diseases || 'Não relatado'}`],
+        [`Outras Substâncias: ${profile.otherSubstances || 'Nenhuma'}`]
     ];
     autoTable(doc, {
         startY: yPos,
@@ -183,6 +184,40 @@ export const generateInteractionPDF = (profile: PatientProfile, analysis: DrugIn
     doc.setTextColor(33, 37, 41);
     doc.setFont('helvetica', 'normal');
     doc.text(splitText, margin + 5, yPos + 20);
+
+    // Update Y position after Physician Opinion box
+    yPos += boxHeight + 15;
+
+    // --- Sources Section ---
+    if (yPos + 50 > 280) {
+        doc.addPage();
+        yPos = 20;
+    }
+
+    doc.setFontSize(12);
+    doc.setTextColor(33, 37, 41);
+    doc.setFont('helvetica', 'bold');
+    doc.text("6. Referências e Fontes de Validação", margin, yPos);
+    yPos += 8;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+
+    const sources = [
+        "As interações e análises apresentadas neste relatório são baseadas em protocolos clínicos e bases de dados reconhecidas:",
+        "",
+        "• Anvisa (Agência Nacional de Vigilância Sanitária) - Bulário Eletrônico e Alertas",
+        "• Micromedex® Solutions (Truven Health Analytics)",
+        "• Medscape Drug Reference & Interaction Checker",
+        "• UpToDate® - Drug Information & Clinical Decision Support",
+        "• FDA (U.S. Food and Drug Administration) - Drug Safety Labels"
+    ];
+
+    sources.forEach(source => {
+        doc.text(source, margin + 5, yPos);
+        yPos += 6;
+    });
 
     // Save
     doc.save(`Relatorio_Medico_${profile.age}_${new Date().toISOString().slice(0, 10)}.pdf`);

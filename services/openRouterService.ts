@@ -250,7 +250,8 @@ export const explainStudy = async (study: StudyResult): Promise<StudyExplanation
 
 export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<DrugInteractionAnalysis> => {
     const prompt = `
-    Realize uma análise clínica em dois estágios (Pipeline) para o seguinte paciente.
+    ATUE COMO UMA JUNTA MÉDICA MULTIDISCIPLINAR DE ELITE (CONSELHO CLÍNICO).
+    O objetivo é realizar uma análise profunda e sequencial do paciente abaixo.
 
     DADOS DO PACIENTE:
     - Idade: ${profile.age}
@@ -269,7 +270,7 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
        - Indicação/Motivo: ${m.reason || 'Não informado'}
     `).join('')}
 
-    CONDIÇÕES DE SAÚDE:
+    CONDIÇÕES DE SAÚDE (COMORBIDADES):
     ${profile.diseases}
 
     OUTRAS SUBSTÂNCIAS:
@@ -279,56 +280,61 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
     ${profile.symptoms}
 
     ---
-    
-    ETAPA 1: PERSONA FARMACÊUTICO CLÍNICO (ANÁLISE TÉCNICA)
-    Responsabilidade: Triagem técnica, farmacocinética, interações e segurança. NÃO DIAGNOSTICA.
-    Tarefas:
-    1. Identificar interações (Medicamento-Medicamento, Medicamento-Alimento/Suplemento).
-    2. Analisar riscos com comorbidades (Ex: AINEs em Hipertensos).
-    3. Classificar severidade técnica.
-    4. Sugerir otimização de horários (Cronofarmacologia).
+    ESTRUTURA DE ANÁLISE (PIPELINE):
 
-    ETAPA 2: PERSONA MÉDICO SÊNIOR (VALIDAÇÃO CLÍNICA)
-    Responsabilidade: Visão global, relevância clínica e conduta.
-    Tarefas:
-    1. Avaliar o impacto real das interações levantadas pelo farmacêutico no contexto deste paciente específico.
-    2. Correlacionar sintomas relatados com possíveis efeitos adversos ou falta de eficácia.
-    3. Gerar um PARECER MÉDICO ESTRUTURADO com orientações (sem prescrever).
+    ETAPA 0: ESPECIALISTAS POR ÁREA (CONSULTA PRÉVIA)
+    Para CADA comorbidade listada acima, imagine um médico especialista (ex: Cardiologista para HAS, Endocrinologista para Diabetes, etc) com >10 anos de experiência analisando:
+    - A adequação dos medicamentos atuais para aquela patologia específica.
+    - O impacto da idade (${profile.age}) e peso (${profile.weight}) no manejo da doença.
+    - Riscos específicos da patologia no contexto dos sintomas relatados.
+    
+    ETAPA 1: PERSONA FARMACÊUTICO CLÍNICO (ANÁLISE DE SEGURANÇA)
+    Com base no parecer dos especialistas da Etapa 0, realize:
+    1. Identificação de interações Medicamento-Medicamento e Medicamento-Substância (suplementos/chás).
+    2. Análise de risco/benefício considerando a função orgânica sugerida pelas comorbidades.
+    3. Verificação meticulosa de horários (Cronofarmacologia) e necessidade de Jejum.
+    4. Classificação de Severidade Técnica.
+
+    ETAPA 2: PERSONA MÉDICO SÊNIOR (COORDENAÇÃO E PARECER FINAL)
+    Responsável pela visão holística do paciente, consolidando as informações dos especialistas e do farmacêutico:
+    1. Validar quais interações são clinicamente críticas no mundo real.
+    2. Correlacionar sintomas (${profile.symptoms}) com o plano terapêutico.
+    3. Emitir o parecer final com orientações fundamentadas em evidências.
 
     ---
 
-    RETORNE APENAS JSON VÁLIDO (SEM MARKDOWN) COM A SEGUINTE ESTRUTURA FINAL:
+    RETORNE APENAS JSON VÁLIDO (SEM MARKDOWN) COM A SEGUINTE ESTRUTURA:
     {
-      "hasInteractions": boolean, // Se houver riscos relevantes
-      "drugInteractions": [ // Preenchido pela Persona Farmacêutico
+      "hasInteractions": boolean,
+      "drugInteractions": [ 
         {
           "pair": ["Med A", "Med B"],
           "severity": "HIGH" | "MODERATE" | "LOW",
-          "description": "Explicação técnica farmacêutica...",
-          "management": "Sugestão técnica de manejo (monitoramento, espaçamento)..."
+          "description": "Explicação técnica farmacêutica baseada no perfil...",
+          "management": "Manejo sugerido..."
         }
       ],
-      "diseaseRisks": [ // Preenchido pela Persona Farmacêutico
+      "diseaseRisks": [
         {
           "disease": "Nome da Doença",
           "relatedMedication": "Nome do Medicamento",
           "riskLevel": "HIGH" | "MODERATE" | "LOW",
-          "description": "Explicação do risco fisiológico...",
-          "recommendation": "Cuidado sugerido..."
+          "description": "Parecer do Especialista da área detalhando o risco...",
+          "recommendation": "Ajuste ou cuidado recomendado pelo especialista..."
         }
       ],
-      "substanceInteractions": [ // Preenchido pela Persona Farmacêutico
+      "substanceInteractions": [
         {
-          "substance": "Ex: Álcool ou Alimento",
-          "medication": "Nome do Medicamento",
+          "substance": "Substância",
+          "medication": "Medicamento",
           "effect": "Descrição da interação...",
           "recommendation": "Orientação..."
         }
       ],
-      "symptomAnalysis": "Texto corrido (Markdown) onde o MÉDICO avalia se os sintomas do paciente ('${profile.symptoms}') podem ser iatrogênicos, falha terapêutica ou evolução da doença.",
-      "physicianAnalysis": "Texto corrido (Markdown) contendo o PARECER MÉDICO FINAL. Deve conter: 1. Impreção Geral; 2. Validação dos Riscos (quais realmente importam); 3. Orientações de Conduta (ex: 'Discutir com seu médico a troca de X', 'Monitorar pressão arterial'). Use tom ético, educacional e seguro.",
-      "generalWarnings": ["Aviso curto 1", "Aviso curto 2"],
-      "scheduleSuggestions": "Texto explicativo (Markdown) feito pelo FARMACÊUTICO com sugestão de horários otimizados."
+      "symptomAnalysis": "Markdown: Avaliação médica correlacionando sintomas com medicamentos/doenças.",
+      "physicianAnalysis": "Markdown: PARECER DA JUNTA MÉDICA. Consolidação final com orientações de conduta.",
+      "generalWarnings": ["Aviso 1", "Aviso 2"],
+      "scheduleSuggestions": "Markdown: Cronofarmacologia e sugestão de horários otimizados."
     }
     `;
 
