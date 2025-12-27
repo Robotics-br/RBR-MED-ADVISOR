@@ -157,9 +157,21 @@ export const generateInteractionPDF = (profile: PatientProfile, analysis: DrugIn
     }
 
     // --- Physician Opinion ---
+    const sanitizeText = (text: string) => {
+        if (!text) return "";
+        return text
+            .replace(/\*\*/g, '')
+            .replace(/###/g, '')
+            .replace(/##/g, '')
+            .replace(/#/g, '')
+            .replace(/[^\x20-\x7E\xA0-\xFF\s\n\r]/g, '') // Remove emojis e caracteres especiais não-latinos
+            .trim();
+    };
+
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const splitText = doc.splitTextToSize(analysis.physicianAnalysis, pageWidth - (margin * 2) - 10);
+    const cleanedAnalysis = sanitizeText(analysis.physicianAnalysis);
+    const splitText = doc.splitTextToSize(cleanedAnalysis, pageWidth - (margin * 2) - 10);
 
     // Calculate required height: line count * line height (approx 5mm per line at size 10) + header/padding
     const textHeight = splitText.length * 5;
@@ -188,6 +200,82 @@ export const generateInteractionPDF = (profile: PatientProfile, analysis: DrugIn
     // Update Y position after Physician Opinion box
     yPos += boxHeight + 15;
 
+    // --- Schedule Suggestions (Cronofarmacologia) ---
+    if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+    doc.setFontSize(12);
+    doc.setTextColor(16, 185, 129); // Emerald 600
+    doc.setFont('helvetica', 'bold');
+    doc.text("6. Sugestão de Cronofarmacologia", margin, yPos);
+    yPos += 5;
+
+    const scheduleLines = analysis.scheduleSuggestions.split('\n')
+        .filter(line => {
+            const trimmed = line.trim().toLowerCase();
+            return trimmed &&
+                !trimmed.includes(':---') &&
+                !trimmed.includes('---') &&
+                !trimmed.includes('| medicamento |') &&
+                !trimmed.includes('| fármaco |') &&
+                !trimmed.includes('| horário |');
+        })
+        .map(line => {
+            if (line.includes('|')) {
+                const parts = line.split('|').filter(p => p.trim() !== '').map(p => p.trim());
+                if (parts.length >= 2) {
+                    return [sanitizeText(parts[0]), sanitizeText(parts[1]), sanitizeText(parts[2] || '')];
+                }
+            }
+            const [key, ...rest] = line.split(/[:-]/);
+            if (key.trim() && rest.length > 0) {
+                return [sanitizeText(key), "--", sanitizeText(rest.join(':'))];
+            }
+            return null;
+        }).filter(Boolean);
+
+    if (scheduleLines.length > 0) {
+        autoTable(doc, {
+            startY: yPos,
+            head: [['Fármaco', 'Horário', 'Justificativa']],
+            body: scheduleLines as string[][],
+            theme: 'striped',
+            headStyles: { fillColor: [16, 185, 129] },
+            styles: { fontSize: 8 },
+        });
+        // @ts-ignore
+        yPos = doc.lastAutoTable.finalY + 15;
+    } else {
+        yPos += 10;
+    }
+
+    // --- Substance Interactions ---
+    if (analysis.substanceInteractions.length > 0) {
+        if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+        doc.setFontSize(12);
+        doc.setTextColor(147, 51, 234); // Purple 600
+        doc.setFont('helvetica', 'bold');
+        doc.text("7. Alertas: Suplementos e Substâncias", margin, yPos);
+        yPos += 5;
+
+        const substanceRows = analysis.substanceInteractions.map(si => [
+            `${si.substance} + ${si.medication}`,
+            sanitizeText(si.effect),
+            sanitizeText(si.recommendation)
+        ]);
+
+        autoTable(doc, {
+            startY: yPos,
+            head: [['Interação', 'Efeito', 'Recomendação']],
+            body: substanceRows,
+            theme: 'striped',
+            headStyles: { fillColor: [147, 51, 234] },
+            styles: { fontSize: 8 },
+        });
+        // @ts-ignore
+        yPos = doc.lastAutoTable.finalY + 15;
+    }
+
     // --- Sources Section ---
     if (yPos + 50 > 280) {
         doc.addPage();
@@ -197,7 +285,7 @@ export const generateInteractionPDF = (profile: PatientProfile, analysis: DrugIn
     doc.setFontSize(12);
     doc.setTextColor(33, 37, 41);
     doc.setFont('helvetica', 'bold');
-    doc.text("6. Referências e Fontes de Validação", margin, yPos);
+    doc.text("8. Referências e Fontes de Validação", margin, yPos);
     yPos += 8;
 
     doc.setFontSize(9);
@@ -222,3 +310,4 @@ export const generateInteractionPDF = (profile: PatientProfile, analysis: DrugIn
     // Save
     doc.save(`Relatorio_Medico_${profile.age}_${new Date().toISOString().slice(0, 10)}.pdf`);
 };
+

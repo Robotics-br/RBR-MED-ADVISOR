@@ -50,7 +50,6 @@ export interface PatientProfile {
   weight: string;
   diseases: string;
   otherSubstances: string;
-  symptoms: string;
   medications: Medication[];
 }
 
@@ -83,6 +82,5 @@ export interface DrugInteractionAnalysis {
   substanceInteractions: SubstanceInteraction[];
   generalWarnings: string[];
   scheduleSuggestions: string; // Markdown text
-  symptomAnalysis: string; // Analysis of reported symptoms vs side effects
   physicianAnalysis: string; // Senior Physician's clinical validation report
 }

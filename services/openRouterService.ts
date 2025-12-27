@@ -276,8 +276,9 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
     OUTRAS SUBSTÂNCIAS:
     ${profile.otherSubstances}
 
-    SINTOMAS RELATADOS:
-    ${profile.symptoms}
+    ---
+    REGRAS DE LINGUAGEM:
+    - OBRIGATÓRIO: Sempre que utilizar um termo médico técnico, coloque entre parênteses o seu significado popular correspondente (ex: Dislipidemia (colesterol alto), Epistaxe (sangramento no nariz)).
 
     ---
     ESTRUTURA DE ANÁLISE (PIPELINE):
@@ -286,7 +287,6 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
     Para CADA comorbidade listada acima, imagine um médico especialista (ex: Cardiologista para HAS, Endocrinologista para Diabetes, etc) com >10 anos de experiência analisando:
     - A adequação dos medicamentos atuais para aquela patologia específica.
     - O impacto da idade (${profile.age}) e peso (${profile.weight}) no manejo da doença.
-    - Riscos específicos da patologia no contexto dos sintomas relatados.
     
     ETAPA 1: PERSONA FARMACÊUTICO CLÍNICO (ANÁLISE DE SEGURANÇA)
     Com base no parecer dos especialistas da Etapa 0, realize:
@@ -298,8 +298,15 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
     ETAPA 2: PERSONA MÉDICO SÊNIOR (COORDENAÇÃO E PARECER FINAL)
     Responsável pela visão holística do paciente, consolidando as informações dos especialistas e do farmacêutico:
     1. Validar quais interações são clinicamente críticas no mundo real.
-    2. Correlacionar sintomas (${profile.symptoms}) com o plano terapêutico.
-    3. Emitir o parecer final com orientações fundamentadas em evidências.
+    2. Gerar um PARECER MÉDICO ESTRUTURADO com as seguintes seções em Markdown:
+       ### 🩺 Impressão Clínica Geral
+       (Resumo do quadro)
+       ### ⚠️ Riscos Críticos Identificados
+       (Quais interações realmente importam e por quê)
+       ### 📋 Orientações e Condutas Sugeridas
+       (Ações práticas para discutir com o médico assistente)
+       ### 💡 Considerações de Estilo de Vida e Prevenção
+       (Dicas adicionais baseadas no perfil)
 
     ---
 
@@ -331,10 +338,9 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
           "recommendation": "Orientação..."
         }
       ],
-      "symptomAnalysis": "Markdown: Avaliação médica correlacionando sintomas com medicamentos/doenças.",
-      "physicianAnalysis": "Markdown: PARECER DA JUNTA MÉDICA. Consolidação final com orientações de conduta.",
+      "physicianAnalysis": "Markdown: Texto organizado conforme as seções definidas na Etapa 2.",
       "generalWarnings": ["Aviso 1", "Aviso 2"],
-      "scheduleSuggestions": "Markdown: Cronofarmacologia e sugestão de horários otimizados."
+      "scheduleSuggestions": "OBRIGATÓRIO: Retorne uma tabela Markdown estrita com 3 colunas: | Fármaco | Horário Sugerido | Justificativa Clínica |. Use apenas os nomes dos medicamentos na primeira coluna. Não inclua textos introdutórios ou títulos fora da tabela."
     }
     `;
 
