@@ -84,8 +84,3 @@ export interface DrugInteractionAnalysis {
   scheduleSuggestions: string; // Markdown text
   physicianAnalysis: string; // Senior Physician's clinical validation report
 }
-
-export interface Cid10Result {
-  codigo: string;
-  descricao: string;
-}

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Medication, PatientProfile, DrugInteractionAnalysis, Cid10Result } from '../types';
-import { analyzeDrugInteractions, searchCid10 } from '../services/openRouterService';
+import { Medication, PatientProfile, DrugInteractionAnalysis } from '../types';
+import { analyzeDrugInteractions } from '../services/openRouterService';
 import { generateInteractionPDF } from '../services/pdfService';
 
 const getSpecialistForDisease = (disease: string): string => {
@@ -111,37 +111,6 @@ export const DrugInteraction: React.FC = () => {
         usageType: 'CONTINUOUS',
         reason: ''
     });
-
-    // CID-10 Autocomplete State
-    const [cidResults, setCidResults] = useState<Cid10Result[]>([]);
-    const [showCidDropdown, setShowCidDropdown] = useState(false);
-    const [searchingCid, setSearchingCid] = useState(false);
-
-    const handleCidSearch = async (val: string) => {
-        setCurrentMed({ ...currentMed, reason: val });
-
-        if (val.length >= 3) {
-            setSearchingCid(true);
-            try {
-                const results = await searchCid10(val);
-                setCidResults(results);
-                setShowCidDropdown(results.length > 0);
-            } catch (err) {
-                console.error("Erro na busca CID-10:", err);
-            } finally {
-                setSearchingCid(false);
-            }
-        } else {
-            setCidResults([]);
-            setShowCidDropdown(false);
-        }
-    };
-
-    const selectCid = (cid: Cid10Result) => {
-        setCurrentMed({ ...currentMed, reason: `${cid.codigo} - ${cid.descricao}` });
-        setShowCidDropdown(false);
-        setCidResults([]);
-    };
 
     const handleAddMed = () => {
         if (!currentMed.name) return;
@@ -437,40 +406,15 @@ export const DrugInteraction: React.FC = () => {
                                         placeholder="Ex: Losartana"
                                     />
                                 </div>
-                                <div className="md:col-span-2 relative">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Motivo do Uso (Opcional - Busca DATASUS)</label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                                            value={currentMed.reason || ''}
-                                            onChange={e => handleCidSearch(e.target.value)}
-                                            onFocus={() => { if (cidResults.length > 0) setShowCidDropdown(true); }}
-                                            onBlur={() => setTimeout(() => setShowCidDropdown(false), 200)}
-                                            placeholder="Digite 3 letras para buscar CID-10 (Ex: Diabetes)..."
-                                        />
-                                        {searchingCid && (
-                                            <div className="absolute right-3 top-2.5">
-                                                <div className="animate-spin h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full font-bold"></div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {showCidDropdown && (
-                                        <div className="absolute z-[100] w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                            {cidResults.map((cid, i) => (
-                                                <button
-                                                    key={i}
-                                                    type="button"
-                                                    onClick={() => selectCid(cid)}
-                                                    className="w-full text-left px-4 py-3 hover:bg-emerald-50 border-b border-slate-50 last:border-0 flex flex-col gap-0.5 transition-colors"
-                                                >
-                                                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{cid.codigo}</span>
-                                                    <span className="text-sm text-slate-700 font-bold">{cid.descricao}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
+                                <div className="md:col-span-2">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Motivo do Uso (Opcional)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        value={currentMed.reason || ''}
+                                        onChange={e => setCurrentMed({ ...currentMed, reason: e.target.value })}
+                                        placeholder="Ex: Para controle da pressão..."
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Dosagem</label>
