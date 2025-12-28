@@ -89,3 +89,9 @@ export interface Cid10Result {
   codigo: string;
   descricao: string;
 }
+
+export interface MedicationSuggestion {
+  nome: string;
+  principioAtivo: string;
+}
+

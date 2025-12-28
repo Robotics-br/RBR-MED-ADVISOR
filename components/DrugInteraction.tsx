@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Medication, PatientProfile, DrugInteractionAnalysis, Cid10Result } from '../types';
-import { analyzeDrugInteractions, searchCid10 } from '../services/openRouterService';
+import { Medication, PatientProfile, DrugInteractionAnalysis, Cid10Result, MedicationSuggestion } from '../types';
+import { analyzeDrugInteractions, searchCid10, searchMedication } from '../services/openRouterService';
 import { generateInteractionPDF } from '../services/pdfService';
 
 const getSpecialistForDisease = (disease: string): string => {
@@ -141,6 +141,37 @@ export const DrugInteraction: React.FC = () => {
         setCurrentMed({ ...currentMed, reason: `${cid.codigo} - ${cid.descricao}` });
         setShowCidDropdown(false);
         setCidResults([]);
+    };
+
+    // Medication Autocomplete State
+    const [medResults, setMedResults] = useState<MedicationSuggestion[]>([]);
+    const [showMedDropdown, setShowMedDropdown] = useState(false);
+    const [searchingMed, setSearchingMed] = useState(false);
+
+    const handleMedSearch = async (val: string) => {
+        setCurrentMed({ ...currentMed, name: val });
+
+        if (val.length >= 3) {
+            setSearchingMed(true);
+            try {
+                const results = await searchMedication(val);
+                setMedResults(results);
+                setShowMedDropdown(results.length > 0);
+            } catch (err) {
+                console.error("Erro na busca de medicamentos:", err);
+            } finally {
+                setSearchingMed(false);
+            }
+        } else {
+            setMedResults([]);
+            setShowMedDropdown(false);
+        }
+    };
+
+    const selectMed = (med: MedicationSuggestion) => {
+        setCurrentMed({ ...currentMed, name: med.nome });
+        setShowMedDropdown(false);
+        setMedResults([]);
     };
 
     const handleAddMed = () => {
@@ -427,15 +458,40 @@ export const DrugInteraction: React.FC = () => {
                         {/* Add Med Form */}
                         <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 mb-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-2 relative">
                                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nome do Medicamento</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                                        value={currentMed.name}
-                                        onChange={e => setCurrentMed({ ...currentMed, name: e.target.value })}
-                                        placeholder="Ex: Losartana"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                            value={currentMed.name}
+                                            onChange={e => handleMedSearch(e.target.value)}
+                                            onFocus={() => { if (medResults.length > 0) setShowMedDropdown(true); }}
+                                            onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
+                                            placeholder="Ex: Losartana"
+                                        />
+                                        {searchingMed && (
+                                            <div className="absolute right-3 top-2.5">
+                                                <div className="animate-spin h-4 w-4 border-2 border-emerald-500 border-t-transparent rounded-full"></div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {showMedDropdown && (
+                                        <div className="absolute z-[100] w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {medResults.map((med, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={() => selectMed(med)}
+                                                    className="w-full text-left px-4 py-3 hover:bg-emerald-50 border-b border-slate-50 last:border-0 flex flex-col gap-0.5 transition-colors"
+                                                >
+                                                    <span className="text-sm text-slate-700 font-bold">{med.nome}</span>
+                                                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{med.principioAtivo}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="md:col-span-2 relative">
                                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Motivo do Uso (Opcional - Busca DATASUS)</label>

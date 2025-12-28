@@ -1,5 +1,5 @@
 
-import { ResearchResponse, StudyResult, StudyExplanation, PatientProfile, DrugInteractionAnalysis, Cid10Result } from "../types";
+import { ResearchResponse, StudyResult, StudyExplanation, PatientProfile, DrugInteractionAnalysis, Cid10Result, MedicationSuggestion } from "../types";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 const SITE_URL = "http://localhost:3000"; // Site URL for OpenRouter rankings
@@ -434,6 +434,65 @@ export const searchCid10 = async (query: string): Promise<Cid10Result[]> => {
         }
     } catch (e) {
         console.error("Erro na busca CID-10", e);
+        return [];
+    }
+};
+
+export const searchMedication = async (query: string): Promise<MedicationSuggestion[]> => {
+    if (!query || query.length < 3) return [];
+
+    const prompt = `
+    Atue como um banco de dados de medicamentos aprovados no Brasil (ANVISA/Farmácia Popular).
+    Busque medicamentos que correspondam ao termo: "${query}".
+    
+    Retorne uma lista de até 10 resultados mais relevantes.
+    Para cada resultado, forneça o nome (Sugerido: Nome Comercial) e o princípio ativo.
+    
+    Formato de Saída (JSON Puro - Apenas o Array):
+    [
+      {"nome": "Losartana Potássica", "principioAtivo": "Losartana"},
+      {"nome": "Puran T4", "principioAtivo": "Levotiroxina Sódica"}
+    ]
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "google/gemini-2.0-flash-001",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a precise medication database assistant. Return strictly valid JSON array. No markdown, no prose."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.1
+            })
+        });
+
+        if (!response.ok) return [];
+
+        const json = await response.json();
+        const content = (json.choices?.[0]?.message?.content || "[]").replace(/```json/g, '').replace(/```/g, '').trim();
+
+        try {
+            return JSON.parse(content) as MedicationSuggestion[];
+        } catch (e) {
+            console.error("Failed to parse medication JSON", content);
+            return [];
+        }
+    } catch (e) {
+        console.error("Erro na busca de medicamentos", e);
         return [];
     }
 };
