@@ -6,8 +6,8 @@ import { VisualAnalysis } from './components/VisualAnalysis';
 import { StudyDetailsModal } from './components/StudyDetailsModal';
 import { SourceRelevance } from './components/SourceRelevance';
 import { ExamChecklist } from './components/ExamChecklist';
-import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy } from './services/openRouterService';
-import { ResearchResponse, StudyResult, StudyExplanation } from './types';
+import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy, searchCid10, searchMedication } from './services/openRouterService';
+import { ResearchResponse, StudyResult, StudyExplanation, Cid10Result, MedicationSuggestion } from './types';
 
 import { DrugInteraction } from './components/DrugInteraction';
 
@@ -49,6 +49,66 @@ const App: React.FC = () => {
   const [selectedStudy, setSelectedStudy] = useState<StudyResult | null>(null);
   const [explanation, setExplanation] = useState<StudyExplanation | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+
+  // CID-10 Autocomplete State
+  const [cidResults, setCidResults] = useState<Cid10Result[]>([]);
+  const [showCidDropdown, setShowCidDropdown] = useState(false);
+  const [searchingCid, setSearchingCid] = useState(false);
+
+  // Medication Autocomplete State
+  const [medResults, setMedResults] = useState<MedicationSuggestion[]>([]);
+  const [showMedDropdown, setShowMedDropdown] = useState(false);
+  const [searchingMed, setSearchingMed] = useState(false);
+
+  const handleCidSearch = async (val: string) => {
+    setQuery(val);
+    if (val.length >= 3) {
+      setSearchingCid(true);
+      try {
+        const results = await searchCid10(val);
+        setCidResults(results);
+        setShowCidDropdown(results.length > 0);
+      } catch (err) {
+        console.error("Erro na busca CID-10:", err);
+      } finally {
+        setSearchingCid(false);
+      }
+    } else {
+      setCidResults([]);
+      setShowCidDropdown(false);
+    }
+  };
+
+  const selectCid = (cid: Cid10Result) => {
+    setQuery(cid.descricao);
+    setShowCidDropdown(false);
+    setCidResults([]);
+  };
+
+  const handleMedSearch = async (val: string) => {
+    setMedicationQuery(val);
+    if (val.length >= 3) {
+      setSearchingMed(true);
+      try {
+        const results = await searchMedication(val);
+        setMedResults(results);
+        setShowMedDropdown(results.length > 0);
+      } catch (err) {
+        console.error("Erro na busca de medicamentos:", err);
+      } finally {
+        setSearchingMed(false);
+      }
+    } else {
+      setMedResults([]);
+      setShowMedDropdown(false);
+    }
+  };
+
+  const selectMed = (med: MedicationSuggestion) => {
+    setMedicationQuery(med.nome);
+    setShowMedDropdown(false);
+    setMedResults([]);
+  };
 
   /* ... (rest of the file remains unchanged until loading UI block) ... */
 
@@ -177,32 +237,82 @@ const App: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 via-indigo-500 to-brand-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 <div className="grid grid-cols-1 gap-6">
-                  <div className="space-y-2 text-left">
+                  <div className="space-y-2 text-left relative">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
                       Enfermidade ou Condição
                     </label>
-                    <input
-                      type="text"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Ex: Alzheimer, Artrite Reumatoide..."
-                      className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => handleCidSearch(e.target.value)}
+                        onFocus={() => { if (cidResults.length > 0) setShowCidDropdown(true); }}
+                        onBlur={() => setTimeout(() => setShowCidDropdown(false), 200)}
+                        placeholder="Ex: Alzheimer, Artrite Reumatoide..."
+                        className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+                        disabled={loading}
+                      />
+                      {searchingCid && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <div className="animate-spin h-5 w-5 border-3 border-brand-500 border-t-transparent rounded-full font-bold"></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {showCidDropdown && (
+                      <div className="absolute z-[100] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                        {cidResults.map((cid, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => selectCid(cid)}
+                            className="w-full text-left px-6 py-4 hover:bg-brand-50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors"
+                          >
+                            <span className="text-[10px] font-black text-brand-600 uppercase tracking-widest">{cid.codigo}</span>
+                            <span className="text-base text-slate-700 font-bold">{cid.descricao}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <div className={`space-y-2 text-left transition-all duration-500 ${activeMode === 'verify' ? 'opacity-100 max-h-32' : 'opacity-30 max-h-0 overflow-hidden'}`}>
+                  <div className={`space-y-2 text-left transition-all duration-500 relative ${activeMode === 'verify' ? 'opacity-100 max-h-48' : 'opacity-0 max-h-0 overflow-hidden shadow-none'}`}>
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
                       Nome do Medicamento ou Terapia
                     </label>
-                    <input
-                      type="text"
-                      value={medicationQuery}
-                      onChange={(e) => setMedicationQuery(e.target.value)}
-                      placeholder="Ex: Lecanemabe..."
-                      className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
-                      disabled={loading || activeMode === 'discover'}
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={medicationQuery}
+                        onChange={(e) => handleMedSearch(e.target.value)}
+                        onFocus={() => { if (medResults.length > 0) setShowMedDropdown(true); }}
+                        onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
+                        placeholder="Ex: Lecanemabe..."
+                        className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+                        disabled={loading || activeMode === 'discover'}
+                      />
+                      {searchingMed && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <div className="animate-spin h-5 w-5 border-3 border-brand-500 border-t-transparent rounded-full font-bold"></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {showMedDropdown && (
+                      <div className="absolute z-[100] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                        {medResults.map((med, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => selectMed(med)}
+                            className="w-full text-left px-6 py-4 hover:bg-brand-50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors"
+                          >
+                            <span className="text-base text-slate-700 font-bold">{med.nome}</span>
+                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{med.principioAtivo}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 

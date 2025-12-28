@@ -19,16 +19,16 @@ export const searchMedicalTrials = async (disease: string): Promise<ResearchResp
     
     Objetivo: Retornar evidências divididas em duas categorias obrigatórias.
     
-    Formato de Saída (Exatamente este JSON):
+    Formato de Saída (Exatamente este JSON, com valores em PORTUGUÊS):
     {
       "diagnostics": [
          // Liste pelo menos 3 exames ou métodos diagnósticos (Sangue, Imagem, Genético, Clínico)
          {
-            "therapyName": "Nome do Exame",
+            "therapyName": "Nome do Exame em Português",
             "type": "DIAGNOSIS",
-            "studyTitle": "Diretriz ou Estudo",
-            "fonte_origem": "Fonte",
-            "mainResult": "Acurácia/Sensibilidade...",
+            "studyTitle": "Título da Diretriz ou Estudo em Português",
+            "fonte_origem": "Fonte da evidência",
+            "mainResult": "Acurácia/Sensibilidade em Português...",
             "jamaLink": "URL",
             "participants": 0,
             "estimatedEfficacy": 95, // Acurácia
@@ -40,11 +40,11 @@ export const searchMedicalTrials = async (disease: string): Promise<ResearchResp
       "treatments": [
          // Liste tratamentos relevantes (Medicamentos, Terapias)
          {
-            "therapyName": "Nome do Tratamento",
+            "therapyName": "Nome do Tratamento em Português",
             "type": "TREATMENT",
-            "studyTitle": "Estudo...",
-            "fonte_origem": "Fonte",
-            "mainResult": "Resultado...",
+            "studyTitle": "Título do Estudo em Português",
+            "fonte_origem": "Fonte da evidência",
+            "mainResult": "Resultado traduzido para Português...",
             "jamaLink": "URL",
             "participants": 0,
             "estimatedEfficacy": 0,
@@ -73,15 +73,15 @@ export const verifyMedicationEfficacy = async (disease: string, medication: stri
     2. Se NÃO encontrar evidência ou se for inconclusivo MESMO APÓS expandir a busca:
        Retorne o JSON com um item no array "studies" onde "isWarning": true e "warningMessage": "Explicação detalhada...".
     
-    JSON Template (retorne APENAS o JSON cru, sem markdown):
+    JSON Template (retorne APENAS o JSON cru, sem markdown, com valores em PORTUGUÊS):
     {
       "studies": [
         {
           "therapyName": "${medication}",
           "type": "TREATMENT",
-          "studyTitle": "...",
-          "fonte_origem": "...",
-          "mainResult": "...",
+          "studyTitle": "Título do Estudo em Português",
+          "fonte_origem": "Fonte (ex: NEJM, Lancet)",
+          "mainResult": "Resultado da eficácia traduzido para Português",
           "jamaLink": "...",
           "participants": 0,
           "estimatedEfficacy": 0,
