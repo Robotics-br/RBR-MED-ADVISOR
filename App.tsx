@@ -10,6 +10,7 @@ import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy, searchCid1
 import { ResearchResponse, StudyResult, StudyExplanation, Cid10Result, MedicationSuggestion } from './types';
 
 import { DrugInteraction } from './components/DrugInteraction';
+import { Login } from './components/Login';
 
 type SearchMode = 'discover' | 'verify' | 'interactions';
 
@@ -20,6 +21,21 @@ const App: React.FC = () => {
   const [query, setQuery] = useState('');
   const [medicationQuery, setMedicationQuery] = useState('');
   const [activeMode, setActiveMode] = useState<SearchMode>('discover');
+
+  // Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('med_advisor_auth') === 'volnei';
+  });
+
+  const handleLogin = (username: string) => {
+    localStorage.setItem('med_advisor_auth', username);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('med_advisor_auth');
+    setIsAuthenticated(false);
+  };
 
   // Dynamic Search Status
   const [searchStatus, setSearchStatus] = useState("Iniciando análise...");
@@ -174,9 +190,13 @@ const App: React.FC = () => {
     setLoadingExplanation(false);
   };
 
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-600 bg-transparent">
-      <Header />
+      <Header onLogout={handleLogout} />
 
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <section className="text-center mb-20 animate-fade-in relative z-10">
