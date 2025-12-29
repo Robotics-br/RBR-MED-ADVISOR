@@ -206,45 +206,45 @@ const App: React.FC = () => {
             Terminal de Inteligência Médica v2.0
           </span>
 
-          <h2 className="text-3xl sm:text-6xl md:text-7xl font-display font-bold text-slate-900 mb-4 sm:mb-6 tracking-tight leading-[1.2] sm:leading-[1.1] px-2">
+          <h2 className="text-5xl sm:text-6xl md:text-7xl font-display font-bold text-slate-900 mb-6 tracking-tight leading-[1.1]">
             Explorador de <br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600">Evidência Científica</span>
           </h2>
 
-          <p className="text-slate-500 max-w-2xl mx-auto text-base sm:text-xl mb-8 sm:mb-12 leading-relaxed font-light px-4">
-            Acesso instantâneo a ensaios clínicos globais (2000-2025). <br className="hidden sm:block" />
+          <p className="text-slate-500 max-w-2xl mx-auto text-lg sm:text-xl mb-12 leading-relaxed font-light">
+            Acesso instantâneo a ensaios clínicos globais (2000-2025). <br />
             Análise consolidada para tomada de decisão clínica.
           </p>
 
           {/* Tabs */}
-          <div className="flex justify-center mb-6 sm:mb-10 overflow-x-auto pb-4 sm:pb-0 px-4">
-            <div className="glass p-1 sm:p-1.5 rounded-full inline-flex shadow-sm min-w-max">
+          <div className="flex justify-center mb-10 overflow-x-auto pb-4 sm:pb-0">
+            <div className="glass p-1.5 rounded-full inline-flex shadow-sm min-w-max">
               <button
                 onClick={() => setActiveMode('discover')}
-                className={`px-4 sm:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${activeMode === 'discover'
+                className={`px-6 sm:px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'discover'
                   ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
                   : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
                   }`}
               >
-                Tratamentos
+                Descobrir Tratamentos
               </button>
               <button
                 onClick={() => setActiveMode('verify')}
-                className={`px-4 sm:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${activeMode === 'verify'
+                className={`px-6 sm:px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'verify'
                   ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
                   : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
                   }`}
               >
-                Eficácia
+                Verificar Eficácia
               </button>
               <button
                 onClick={() => setActiveMode('interactions')}
-                className={`px-4 sm:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${activeMode === 'interactions'
+                className={`px-6 sm:px-8 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${activeMode === 'interactions'
                   ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
                   : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
                   }`}
               >
-                Interações
+                Interação Medicamentosa
               </button>
             </div>
           </div>
@@ -252,8 +252,8 @@ const App: React.FC = () => {
           {activeMode === 'interactions' ? (
             <DrugInteraction />
           ) : (
-            <div className="max-w-3xl mx-auto px-4">
-              <form onSubmit={handleSearch} className="glass p-6 sm:p-10 rounded-[2rem] shadow-card relative overflow-hidden group">
+            <div className="max-w-3xl mx-auto">
+              <form onSubmit={handleSearch} className="glass p-8 sm:p-10 rounded-[2rem] shadow-card relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 via-indigo-500 to-brand-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 <div className="grid grid-cols-1 gap-6">
