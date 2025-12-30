@@ -588,8 +588,8 @@ export const DrugInteraction: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 text-left">Tipo de uso</label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tipo de uso</label>
+                                    <div className="flex space-x-4">
                                         <label className="flex items-center space-x-2 cursor-pointer bg-white px-3 py-2 rounded-lg border border-slate-200 hover:border-emerald-500 transition-colors">
                                             <input
                                                 type="radio"
@@ -598,7 +598,7 @@ export const DrugInteraction: React.FC = () => {
                                                 onChange={() => setCurrentMed({ ...currentMed, usageType: 'CONTINUOUS' })}
                                                 className="text-emerald-600 focus:ring-emerald-500"
                                             />
-                                            <span className="text-sm text-slate-600 whitespace-nowrap">Uso Contínuo</span>
+                                            <span className="text-sm text-slate-600">Uso Contínuo</span>
                                         </label>
                                         <label className="flex items-center space-x-2 cursor-pointer bg-white px-3 py-2 rounded-lg border border-slate-200 hover:border-emerald-500 transition-colors">
                                             <input
@@ -608,7 +608,7 @@ export const DrugInteraction: React.FC = () => {
                                                 onChange={() => setCurrentMed({ ...currentMed, usageType: 'RECENT' })}
                                                 className="text-emerald-600 focus:ring-emerald-500"
                                             />
-                                            <span className="text-sm text-slate-600 whitespace-nowrap">Início Recente</span>
+                                            <span className="text-sm text-slate-600">Início Recente</span>
                                         </label>
                                         <label className="flex items-center space-x-2 cursor-pointer bg-white px-3 py-2 rounded-lg border border-slate-200 hover:border-emerald-500 transition-colors">
                                             <input
@@ -618,16 +618,16 @@ export const DrugInteraction: React.FC = () => {
                                                 onChange={() => setCurrentMed({ ...currentMed, usageType: 'SOS' })}
                                                 className="text-emerald-600 focus:ring-emerald-500"
                                             />
-                                            <span className="text-sm text-slate-600 whitespace-nowrap">Se Necessário (SOS)</span>
+                                            <span className="text-sm text-slate-600">Se Necessário (SOS)</span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 mt-4">
+                            <div className="flex items-center justify-end space-x-3">
                                 {editingIndex !== null && (
                                     <button
                                         onClick={handleCancelEdit}
-                                        className="px-6 py-3 sm:py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors text-sm sm:text-base"
+                                        className="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors"
                                     >
                                         Cancelar
                                     </button>
@@ -635,7 +635,7 @@ export const DrugInteraction: React.FC = () => {
                                 <button
                                     onClick={handleAddMed}
                                     disabled={!currentMed.name}
-                                    className={`px-6 py-3 sm:py-2 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base
+                                    className={`px-6 py-2 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                                             ${editingIndex !== null ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
                                 >
                                     {editingIndex !== null ? 'Atualizar Medicamento' : 'Adicionar Medicamento'}
@@ -651,36 +651,34 @@ export const DrugInteraction: React.FC = () => {
                                 </div>
                             ) : (
                                 profile.medications.map((med, idx) => (
-                                    <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group gap-4">
-                                        <div className="flex items-start sm:items-center space-x-4 w-full sm:w-auto">
-                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors shrink-0">
+                                    <div key={idx} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all group">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
                                                 {idx + 1}
                                             </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h4 className="font-bold text-slate-800 truncate">{med.name} <span className="font-normal text-slate-500 text-sm">({med.dosage})</span></h4>
-                                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                            <div>
+                                                <h4 className="font-bold text-slate-800">{med.name} <span className="font-normal text-slate-500 text-sm">({med.dosage})</span></h4>
+                                                <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-xs text-slate-500">{med.schedule} • {med.frequency}</span>
                                                     {med.usageType === 'RECENT' && <span className="text-[10px] font-bold bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full">Recente</span>}
                                                     {med.usageType === 'SOS' && <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">SOS</span>}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0">
+                                        <div className="flex items-center space-x-2">
                                             <button
                                                 onClick={() => handleEditMed(idx)}
-                                                className="p-2 text-slate-400 hover:text-blue-500 transition-colors flex items-center gap-1 text-xs font-bold"
+                                                className="p-2 text-slate-300 hover:text-blue-500 transition-colors"
                                                 title="Editar"
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                <span className="sm:hidden">Editar</span>
                                             </button>
                                             <button
                                                 onClick={() => handleRemoveMed(idx)}
-                                                className="p-2 text-slate-400 hover:text-red-500 transition-colors flex items-center gap-1 text-xs font-bold"
+                                                className="p-2 text-slate-300 hover:text-red-500 transition-colors"
                                                 title="Remover"
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                <span className="sm:hidden">Remover</span>
                                             </button>
                                         </div>
                                     </div>
