@@ -22,6 +22,7 @@ export const AiDiagnosis: React.FC = () => {
 
     // Form State
     const [profile, setProfile] = useState<PatientProfile>({
+        patientName: '',
         age: '',
         gender: '',
         weight: '',
@@ -255,6 +256,16 @@ export const AiDiagnosis: React.FC = () => {
                         Perfil Biométrico
                     </h3>
                     <div className="space-y-6 relative z-10">
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Nome do Paciente</label>
+                            <input
+                                type="text"
+                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all outline-none font-bold text-slate-700"
+                                value={profile.patientName}
+                                onChange={e => setProfile({ ...profile, patientName: e.target.value })}
+                                placeholder="Nome completo"
+                            />
+                        </div>
                         <div>
                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Idade</label>
                             <input

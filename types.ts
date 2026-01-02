@@ -45,6 +45,7 @@ export interface Medication {
 }
 
 export interface PatientProfile {
+  patientName?: string;
   age: string;
   gender: string;
   weight: string;

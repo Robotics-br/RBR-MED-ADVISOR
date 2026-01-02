@@ -21,56 +21,23 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
     const handleGeneratePDF = async () => {
         const element = document.getElementById('professional-report-template');
         if (!element) return;
-
         setIsGeneratingPdf(true);
-
         try {
-            // Configurar o elemento para captura
+            const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
             const originalDisplay = element.style.display;
             element.style.display = 'block';
-            element.style.width = '794px'; // A4 width at 96 DPI
-
-            // Gerar o Canvas
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                windowWidth: 794
+            await new Promise(res => setTimeout(res, 500));
+            await pdf.html(element, {
+                callback: function (doc) {
+                    doc.save(`Laudo-Medico-${profile?.patientName || 'Paciente'}-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+                    element.style.display = originalDisplay;
+                    setIsGeneratingPdf(false);
+                },
+                x: 0, y: 0, autoPaging: 'text', width: 595, windowWidth: 794,
+                margin: [40, 0, 40, 0]
             });
-
-            element.style.display = originalDisplay;
-
-            // Criar PDF
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const imgWidth = 210;
-            const pageHeight = 297;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft > 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            pdf.save(`Laudo-Medico-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
-
         } catch (error) {
             console.error('Erro ao gerar PDF:', error);
-            alert('Erro ao gerar laudo profissional.');
-        } finally {
             setIsGeneratingPdf(false);
         }
     };
@@ -375,128 +342,165 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                 </div>
             </div>
 
-            {/* Minimalist Professional Medical Report Template (Clean Paper Style) */}
+            {/* Ultra-Compact Professional Clinical Report Template */}
             {data && (
                 <div id="professional-report-template" style={{
                     display: 'none',
-                    padding: '50px 60px',
+                    width: '794px',
+                    padding: '50px 60px', // More breathing room for the canvas
                     backgroundColor: '#ffffff',
-                    color: '#1a1a1a',
-                    fontFamily: '"Times New Roman", Times, serif',
-                    lineHeight: '1.4'
+                    color: '#000000',
+                    fontFamily: 'serif',
+                    lineHeight: '1.4' // Better readability
                 }}>
 
-                    {/* Header: Institutional Look */}
-                    <div style={{ borderBottom: '1px solid #000', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: '10px' }}>
-                        <div style={{ textAlign: 'left' }}>
-                            <h1 style={{ fontSize: '18pt', fontWeight: 'bold', margin: '0', letterSpacing: '-0.5px' }}>PARECER TÉCNICO-CLÍNICO</h1>
-                            <p style={{ fontSize: '9pt', color: '#666', margin: '2px 0 0 0', textTransform: 'uppercase', fontWeight: 'bold' }}>MedEvidência Pro - Suporte à Decisão Médica</p>
+                    {/* Compact Institutional Header */}
+                    <div style={{ borderBottom: '1px solid #000', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '3px' }}>
+                        <div>
+                            <h1 style={{ fontSize: '13px', fontWeight: 'bold', margin: '0', textTransform: 'uppercase' }}>PARECER TÉCNICO DE INVESTIGAÇÃO CLÍNICA</h1>
+                            <p style={{ fontSize: '9px', color: '#444', margin: '0' }}>SISTEMA MEDEVIDÊNCIA PRO | JUNTA MÉDICA DIGITAL</p>
                         </div>
-                        <div style={{ textAlign: 'right', fontSize: '9pt', color: '#444' }}>
-                            <p style={{ margin: 0 }}><strong>Emissão:</strong> {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                            <p style={{ margin: 0 }}>ID: {Math.random().toString(36).substring(7).toUpperCase()}</p>
+                        <div style={{ textAlign: 'right', fontSize: '8px' }}>
+                            <p style={{ margin: 0 }}><strong>DOC:</strong> {Math.random().toString(36).substring(7).toUpperCase()}</p>
+                            <p style={{ margin: 0 }}><strong>DATA:</strong> {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                     </div>
 
-                    {/* Patient Information Bar */}
-                    <div style={{ backgroundColor: '#f3f4f6', padding: '10px 15px', marginBottom: '20px', border: '1px solid #e5e7eb' }}>
-                        <table style={{ width: '100%', fontSize: '10pt', borderCollapse: 'collapse' }}>
+                    {/* Compact Patient Data Grid */}
+                    <div style={{ border: '0.5px solid #000', padding: '6px 10px', marginBottom: '15px', backgroundColor: '#fafafa' }}>
+                        <table style={{ width: '100%', fontSize: '9px', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <tbody>
                                 <tr>
-                                    <td style={{ width: '33%' }}><strong>PACIENTE:</strong> {profile?.gender === 'Masculino' ? 'Sr.' : 'Sra.'} [Identificação Omitida]</td>
-                                    <td style={{ width: '22%' }}><strong>IDADE:</strong> {profile?.age}</td>
-                                    <td style={{ width: '22%' }}><strong>PESO:</strong> {profile?.weight}</td>
-                                    <td style={{ width: '23%', textAlign: 'right' }}><strong>GÊNERO:</strong> {profile?.gender}</td>
+                                    <td style={{ width: '50%', padding: '1px 0' }}><strong>PACIENTE:</strong> {profile?.patientName || 'NÃO INFORMADO'}</td>
+                                    <td style={{ width: '25%', padding: '1px 0' }}><strong>IDADE:</strong> {profile?.age || '-'}</td>
+                                    <td style={{ width: '25%', padding: '1px 0' }}><strong>GÊNERO:</strong> {profile?.gender || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: '1px 0' }}><strong>PESO:</strong> {profile?.weight || '-'}</td>
+                                    <td style={{ padding: '1px 0' }}><strong>ID:</strong> {Math.floor(Math.random() * 100000)}</td>
+                                    <td style={{ padding: '1px 0' }}><strong>REF:</strong> IA-GEN-2024</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    {/* Body Content */}
-                    <div style={{ fontSize: '10.5pt' }}>
+                    {/* Report Sections */}
+                    <div style={{ fontSize: '9px', textAlign: 'left' }}>
 
-                        {/* 1. Contexto Clínico */}
-                        <div style={{ marginBottom: '18px' }}>
-                            <h3 style={{ fontSize: '11pt', borderBottom: '1px solid #ccc', marginBottom: '8px', paddingBottom: '2px', fontWeight: 'bold', color: '#000' }}>I. RESUMO DO QUADRO CLÍNICO E HISTÓRICO</h3>
-                            <div style={{ textAlign: 'justify', marginBottom: '10px' }}>
-                                <p style={{ margin: '0 0 5px 0' }}><strong>Comorbidades Relatadas:</strong> {profile?.diseases || 'Sem registros significativos'}.</p>
-                                <p style={{ margin: '0 0 5px 0' }}><strong>Outras Substâncias (Suplementos/Álcool/Tabaco):</strong> {profile?.otherSubstances || 'Nenhuma informada'}.</p>
-                                <p style={{ margin: '0 0 10px 0' }}><strong>Sintomatologia Apresentada:</strong> {symptoms}</p>
+                        {/* I. Contexto Clínico */}
+                        <div style={{ marginBottom: '15px' }}>
+                            <h3 style={{ fontSize: '11px', borderBottom: '0.5px solid #ccc', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                I. SUMÁRIO CLÍNICO
+                            </h3>
+                            <div style={{ textAlign: 'left', lineHeight: '1.4' }}>
+                                <p style={{ margin: '0 0 6px 0' }}><strong>Histórico:</strong> {profile?.diseases || 'Não informado'}.</p>
+                                <p style={{ margin: '0 0 6px 0' }}><strong>Substâncias:</strong> {profile?.otherSubstances || 'Nenhuma'}.</p>
+                                <div style={{ marginTop: '5px', padding: '8px', backgroundColor: '#f9f9f9', borderLeft: '2px solid #444' }}>
+                                    <p style={{ margin: 0 }}><strong>Queixa:</strong> {symptoms}</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* 2. Farmacologia Atual */}
-                        <div style={{ marginBottom: '18px' }}>
-                            <h3 style={{ fontSize: '11pt', borderBottom: '1px solid #ccc', marginBottom: '8px', paddingBottom: '2px', fontWeight: 'bold' }}>II. TERAPÊUTICA FARMACOLÓGICA EM USO</h3>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt', marginBottom: '10px' }}>
+                        {/* II. Farmacologia */}
+                        <div style={{ marginBottom: '15px', breakInside: 'avoid' }}>
+                            <h3 style={{ fontSize: '11px', borderBottom: '0.5px solid #ccc', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                II. TERAPÊUTICA FARMACOLÓGICA
+                            </h3>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8px', textAlign: 'left' }}>
                                 <thead>
-                                    <tr style={{ textAlign: 'left', borderBottom: '1px solid #000' }}>
-                                        <th style={{ padding: '4px 0' }}>FÁRMACO / SUBSTÂNCIA</th>
-                                        <th style={{ padding: '4px 0' }}>DOSAGEM</th>
-                                        <th style={{ padding: '4px 0' }}>REGIME</th>
-                                        <th style={{ padding: '4px 0' }}>INDICAÇÃO CLÍNICA</th>
+                                    <tr style={{ borderBottom: '0.5px solid #000', backgroundColor: '#eee' }}>
+                                        <th style={{ padding: '3px', border: '0.2px solid #bbb' }}>FÁRMACO</th>
+                                        <th style={{ padding: '3px', border: '0.2px solid #bbb' }}>DOSAGEM</th>
+                                        <th style={{ padding: '3px', border: '0.2px solid #bbb' }}>USO</th>
+                                        <th style={{ padding: '3px', border: '0.2px solid #bbb' }}>MOTIVO</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {profile?.medications.map((med, i) => (
-                                        <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
-                                            <td style={{ padding: '6px 0' }}>{med.name}</td>
-                                            <td style={{ padding: '6px 0' }}>{med.dosage}</td>
-                                            <td style={{ padding: '6px 0' }}>{med.usageType === 'CONTINUOUS' ? 'Contínuo' : 'SOS / Demanda'}</td>
-                                            <td style={{ padding: '6px 0' }}>{med.reason || 'N/A'}</td>
+                                        <tr key={i}>
+                                            <td style={{ padding: '3px', border: '0.2px solid #bbb' }}>{med.name}</td>
+                                            <td style={{ padding: '3px', border: '0.2px solid #bbb' }}>{med.dosage}</td>
+                                            <td style={{ padding: '3px', border: '0.2px solid #bbb' }}>{med.usageType === 'CONTINUOUS' ? 'Contínuo' : 'SOS'}</td>
+                                            <td style={{ padding: '3px', border: '0.2px solid #bbb' }}>{med.reason || '-'}</td>
                                         </tr>
                                     ))}
                                     {(!profile || profile.medications.length === 0) && (
-                                        <tr><td colSpan={4} style={{ padding: '10px 0', textAlign: 'center', color: '#888' }}>Nenhum medicamento listado no histórico.</td></tr>
+                                        <tr><td colSpan={4} style={{ padding: '5px', textAlign: 'center', border: '0.2px solid #bbb' }}>Nenhum medicamento.</td></tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
 
-                        {/* 3. Riscos Farmacológicos */}
+                        {/* III. Riscos */}
                         {data.highRiskInteractions && data.highRiskInteractions.length > 0 && (
-                            <div style={{ marginBottom: '18px', border: '1px solid #000', padding: '10px' }}>
-                                <h3 style={{ fontSize: '10pt', fontWeight: 'bold', margin: '0 0 5px 0', color: '#d32f2f' }}>⚠ ALERTAS DE SEGURANÇA (INTERAÇÕES / RISCOS)</h3>
-                                <ul style={{ margin: '0', paddingLeft: '18px', fontSize: '9pt', color: '#000' }}>
-                                    {data.highRiskInteractions.map((risk, i) => <li key={i} style={{ marginBottom: '3px' }}>{risk}</li>)}
-                                </ul>
+                            <div style={{ marginBottom: '15px', border: '0.8px solid #d00', padding: '10px', backgroundColor: '#fff5f5', breakInside: 'avoid' }}>
+                                <h3 style={{ fontSize: '10px', fontWeight: 'bold', color: '#a00', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    ALERTAS DE SEGURANÇA
+                                </h3>
+                                <div style={{ textAlign: 'left', lineHeight: '1.4', fontSize: '9px' }}>
+                                    {data.highRiskInteractions.map((risk, i) => (
+                                        <div key={i} style={{ marginBottom: '10px' }}>
+                                            • {risk.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
-                        {/* 4. Análise e Discussão */}
-                        <div style={{ marginBottom: '18px' }}>
-                            <h3 style={{ fontSize: '11pt', borderBottom: '1px solid #ccc', marginBottom: '8px', paddingBottom: '2px', fontWeight: 'bold' }}>III. ANÁLISE DIFERENCIAL E DISCUSSÃO DA JUNTA MÉDICA</h3>
-                            <div style={{ fontSize: '10pt', lineHeight: '1.5', textAlign: 'justify' }}>
-                                <div dangerouslySetInnerHTML={{ __html: data.discussionSummary.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                                <div style={{ marginTop: '10px' }} dangerouslySetInnerHTML={{ __html: data.comorbiditiesAnalysis.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                        {/* IV. Análise */}
+                        <div style={{ marginBottom: '15px', breakInside: 'avoid' }}>
+                            <h3 style={{ fontSize: '11px', borderBottom: '0.5px solid #ccc', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                III. ANÁLISE DIFERENCIAL
+                            </h3>
+                            <div style={{ textAlign: 'left', lineHeight: '1.4' }}>
+                                <div dangerouslySetInnerHTML={{
+                                    __html: data.discussionSummary.split('\n').filter(l => l.trim()).map(l =>
+                                        `<div style="margin-bottom: 10px;">${l.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`
+                                    ).join('')
+                                }} />
+                                <div style={{ marginTop: '5px' }} dangerouslySetInnerHTML={{
+                                    __html: data.comorbiditiesAnalysis.split('\n').filter(l => l.trim()).map(l =>
+                                        `<div style="margin-bottom: 10px;">${l.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`
+                                    ).join('')
+                                }} />
                             </div>
                         </div>
 
-                        {/* 5. Conclusão Final (DESTAQUE) */}
-                        <div style={{ marginBottom: '20px', padding: '15px', border: '1.5px solid #000' }}>
-                            <h3 style={{ fontSize: '11pt', marginBottom: '8px', fontWeight: 'bold', textTransform: 'uppercase', textDecoration: 'underline' }}>IV. CONCLUSÃO DIAGNÓSTICA E PARECER FINAL</h3>
-                            <div style={{ fontSize: '10.5pt', lineHeight: '1.6', textAlign: 'justify' }}>
-                                <div dangerouslySetInnerHTML={{ __html: data.finalConsensus.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                        {/* V. Conclusão Final */}
+                        <div style={{ marginBottom: '15px', padding: '10px', border: '1.5px solid #000', backgroundColor: '#fcfcfc', breakInside: 'avoid' }}>
+                            <h3 style={{ fontSize: '11px', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                IV. CONCLUSÃO DIAGNÓSTICA
+                            </h3>
+                            <div style={{ lineHeight: '1.4' }}>
+                                <div dangerouslySetInnerHTML={{
+                                    __html: data.finalConsensus.split('\n').filter(l => l.trim()).map(l =>
+                                        `<div style="margin-bottom: 12px;">${l.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`
+                                    ).join('')
+                                }} />
                             </div>
                         </div>
 
-                        {/* 6. Conduta Terapêutica */}
-                        <div style={{ marginBottom: '18px' }}>
-                            <h3 style={{ fontSize: '11pt', borderBottom: '1px solid #ccc', marginBottom: '8px', paddingBottom: '2px', fontWeight: 'bold' }}>V. CONDUTA E RECOMENDAÇÕES SUGERIDAS</h3>
-                            <div style={{ fontSize: '10pt', lineHeight: '1.5' }}>
-                                <div dangerouslySetInnerHTML={{ __html: data.recommendations.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\|/g, '').replace(/---/g, '') }} />
+                        {/* VI. Conduta */}
+                        <div style={{ marginBottom: '15px', breakInside: 'avoid' }}>
+                            <h3 style={{ fontSize: '11px', borderBottom: '0.5px solid #ccc', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                V. RECOMENDAÇÕES
+                            </h3>
+                            <div style={{ lineHeight: '1.4' }}>
+                                <div dangerouslySetInnerHTML={{
+                                    __html: data.recommendations.split('\n').filter(l => l.trim()).map(l =>
+                                        `<div style="margin-bottom: 12px;">${l.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\|/g, '').replace(/---/g, '')}</div>`
+                                    ).join('')
+                                }} />
                             </div>
                         </div>
 
-                        {/* 7. Referências Bibliográficas */}
+                        {/* VII. Referências */}
                         {data.references && data.references.length > 0 && (
-                            <div style={{ marginBottom: '30px' }}>
-                                <h3 style={{ fontSize: '10pt', borderBottom: '1px solid #ccc', marginBottom: '8px', paddingBottom: '2px', fontWeight: 'bold' }}>VI. REFERÊNCIAS E FONTES DE EMBASAMENTO</h3>
-                                <ul style={{ margin: '0', paddingLeft: '15px', fontSize: '8pt', color: '#444' }}>
+                            <div style={{ marginBottom: '15px' }}>
+                                <h3 style={{ fontSize: '8px', borderBottom: '0.2px solid #eee', marginBottom: '2px', fontWeight: 'bold' }}>REFERÊNCIAS</h3>
+                                <ul style={{ margin: '0', paddingLeft: '10px', fontSize: '7px', color: '#666' }}>
                                     {data.references.map((ref, i) => (
-                                        <li key={i} style={{ marginBottom: '2px' }}>
-                                            {ref.title} - <span style={{ color: '#0000EE' }}>{ref.url}</span>
-                                        </li>
+                                        <li key={i}>{ref.title} - {ref.url}</li>
                                     ))}
                                 </ul>
                             </div>
@@ -504,27 +508,18 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
 
                     </div>
 
-                    {/* Final Board & Disclaimer */}
-                    <div style={{ marginTop: 'auto', paddingTop: '15px', borderTop: '1px solid #eee' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8pt', color: '#666', marginBottom: '30px' }}>
-                            <div>
-                                <strong>Corpo Consultivo:</strong> {data.boardMembers.map(m => m.role).join(', ')}.
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                MedEvidência Pro v2.0
-                            </div>
+                    {/* Compact Footer */}
+                    <div style={{ marginTop: '20px', borderTop: '0.5px solid #ccc', paddingTop: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', color: '#888' }}>
+                            <span>CORPO CONSULTIVO: {data.boardMembers.map(m => m.role).join('; ')}</span>
+                            <span>MEDEVIDÊNCIA PRO v2.1</span>
                         </div>
-
-                        <div style={{ fontSize: '7.5pt', color: '#888', fontStyle: 'italic', textAlign: 'center', lineHeight: '1.3', border: '1px solid #eee', padding: '8px' }}>
-                            <strong>NOTIFICAÇÃO LEGAL:</strong> Este documento é um resumo técnico gerado por sistemas de inteligência artificial baseado em evidências científicas e nos dados fornecidos.
-                            NÃO constitui receita médica ou diagnóstico definitivo. Deve ser utilizado exclusivamente como material de apoio à decisão clínica por profissionais legalmente habilitados.
-                            {data.disclaimer}
+                        <div style={{ marginTop: '10px', fontSize: '7px', color: '#999', fontStyle: 'italic', textAlign: 'left', maxWidth: '80%' }}>
+                            Laudo IA-Assistido. Não substitui consulta médica. Decisão clínica final sob responsabilidade do médico assistente.
                         </div>
-
-                        <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'center' }}>
-                            <div style={{ borderTop: '1px solid #000', width: '250px', textAlign: 'center', paddingTop: '5px' }}>
-                                <p style={{ fontSize: '9pt', fontWeight: 'bold', margin: '0' }}>ASSINATURA DO MÉDICO ASSISTENTE</p>
-                                <p style={{ fontSize: '8pt', margin: '0' }}>CRM:</p>
+                        <div style={{ marginTop: '30px', textAlign: 'center' }}>
+                            <div style={{ borderTop: '0.5px solid #000', width: '150px', margin: '0 auto', paddingTop: '2px' }}>
+                                <p style={{ fontSize: '8px', fontWeight: 'bold', margin: 0 }}>ASSINATURA E CRM</p>
                             </div>
                         </div>
                     </div>
