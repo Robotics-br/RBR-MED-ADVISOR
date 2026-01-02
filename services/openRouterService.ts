@@ -15,7 +15,14 @@ export const searchMedicalTrials = async (disease: string): Promise<ResearchResp
     Atue como um pesquisador médico sênior.
     Pesquise por "Tratamentos" e "Métodos de Diagnóstico" para a condição: "${disease}".
     
-    Fontes: ${BASE_SOURCES}
+    OBRIGATÓRIO: Tente priorizar e focar primeiramente nestas 4 fontes de prestígio global:
+    1. JAMA Network (site:jamanetwork.com)
+    2. NEJM (site:nejm.org)
+    3. The Lancet (site:thelancet.com)
+    4. Cochrane Library (site:cochranelibrary.com)
+    Use outras fontes como NIH, SciELO ou BMJ apenas como complemento se não houver dados nas 4 principais.
+    
+    Fontes Permitidas: ${BASE_SOURCES}
     
     Objetivo: Retornar evidências divididas em duas categorias obrigatórias.
     
@@ -66,7 +73,8 @@ export const verifyMedicationEfficacy = async (disease: string, medication: stri
     
     INSTRUÇÕES DE BUSCA:
     1. Busque primeiro ensaios clínicos randomizados e revisões sistemáticas em: ${BASE_SOURCES}
-    2. IMPORTANTE: Se o medicamento for comum em regiões específicas (ex: Dipirona no Brasil/Europa) mas restrito nos EUA, EXPANDA a busca para artigos no PubMed, SciELO, European Medicines Agency ou diretrizes clínicas locais confiáveis.
+    2. PRIORIDADE MÁXIMA: JAMA, NEJM, Lancet e Cochrane.
+    3. IMPORTANTE: Se o medicamento for comum em regiões específicas (ex: Dipirona no Brasil/Europa) mas restrito nos EUA, EXPANDA a busca para artigos no PubMed, SciELO, European Medicines Agency ou diretrizes clínicas locais confiáveis.
     
     REGRAS DE RESPOSTA:
     1. Se encontrar evidências robustas: Retorne o JSON com os dados do estudo.
@@ -160,29 +168,56 @@ async function executeOpenRouterSearch(prompt: string): Promise<ResearchResponse
         // Na OpenRouter, citations vêm as vezes. Vamos fazer um fallback simples.
 
         // Extração Inteligente de Citações (Perplexity/OpenRouter)
-        let extractedSources: { title: string, uri: string }[] = [];
+        const allSourcesMap = new Map<string, { title: string, uri: string }>();
 
-        // 1. Tentar extrair do campo oficial 'citations' se a API retornar (comum em modelos Perplexity)
-        // @ts-ignore - citations pode não estar no tipo padrão mas vem na resposta
+        // 1. Mapeamento de Hostnames para Nomes Amigáveis
+        const hostnameToLabel = (urlStr: string) => {
+            try {
+                const url = new URL(urlStr);
+                const host = url.hostname.toLowerCase();
+                if (host.includes('jamanetwork.com')) return 'JAMA Network';
+                if (host.includes('nejm.org')) return 'NEJM';
+                if (host.includes('thelancet.com')) return 'The Lancet';
+                if (host.includes('cochranelibrary.com')) return 'Cochrane Library';
+                if (host.includes('nih.gov')) return 'NIH / PubMed';
+                if (host.includes('scielo.br')) return 'SciELO';
+                if (host.includes('bmj.com')) return 'BMJ';
+                return host.replace('www.', '');
+            } catch {
+                return urlStr;
+            }
+        };
+
+        // 2. Extrair das citações nativas da API
+        // @ts-ignore
         if (json.citations && Array.isArray(json.citations)) {
-            extractedSources = json.citations.map((url: string, index: number) => ({
-                title: new URL(url).hostname.replace('www.', ''),
-                uri: url
-            }));
+            json.citations.forEach((url: string) => {
+                if (url && url.startsWith('http')) {
+                    allSourcesMap.set(url, {
+                        title: hostnameToLabel(url),
+                        uri: url
+                    });
+                }
+            });
         }
 
-        // 2. Se não houver citations nativas, pegar dos links retornados no JSON estruturado pelo modelo
-        if (extractedSources.length === 0) {
-            extractedSources = studies
-                .filter(s => s.jamaLink && s.jamaLink.startsWith('http'))
-                .map(s => ({
-                    title: s.fonte_origem || new URL(s.jamaLink).hostname.replace('www.', ''),
-                    uri: s.jamaLink
-                }));
-        }
+        // 3. Extrair dos estudos (Estes geralmente têm títulos melhores passados pela IA)
+        studies.forEach(s => {
+            if (s.jamaLink && s.jamaLink.startsWith('http')) {
+                // Se já existir pela URL, mas o título do estudo for mais rico (ex: "The Lancet via..."), atualiza
+                const current = allSourcesMap.get(s.jamaLink);
+                const newTitle = s.fonte_origem || hostnameToLabel(s.jamaLink);
 
-        // 3. Remover duplicatas
-        const uniqueSources = Array.from(new Map(extractedSources.map(item => [item.uri, item])).values());
+                if (!current || (newTitle.length > current.title.length)) {
+                    allSourcesMap.set(s.jamaLink, {
+                        title: newTitle,
+                        uri: s.jamaLink
+                    });
+                }
+            }
+        });
+
+        const uniqueSources = Array.from(allSourcesMap.values());
 
         return {
             studies: studies || [],
@@ -198,19 +233,30 @@ async function executeOpenRouterSearch(prompt: string): Promise<ResearchResponse
 
 export const explainStudy = async (study: StudyResult): Promise<StudyExplanation> => {
     const prompt = `
-    Como tradutor médico especializado, explique detalhadamente a aplicação prática do seguinte ensaio clínico:
-    Título: ${study.studyTitle}
-    Tratamento: ${study.therapyName}
-    Resultado: ${study.mainResult}
+    ATUE COMO UM MÉDICO ESPECIALISTA SÊNIOR (PhD) COM MAIS DE 10 ANOS DE EXPERIÊNCIA NA ÁREA E ACADEMIA.
+    Sua tarefa é fornecer uma consultoria técnica de alto nível baseada no seguinte estudo científico:
     
-    Gere um JSON (sem markdown) em Português (Brasil) com:
+    TÍTULO: ${study.studyTitle}
+    INTERVENÇÃO/MÉTODO: ${study.therapyName}
+    RESULTADO/EVIDÊNCIA: ${study.mainResult}
+    CATEGORIA: ${study.type === 'DIAGNOSIS' ? 'Protocolo Diagnóstico' : 'Protocolo de Tratamento'}
+    
+    OBJETIVO:
+    Forneça uma análise clínica sofisticada para outro médico, mantendo o rigor científico mas focando na aplicabilidade prática no consultório/hospital.
+    
+    REGRA DE OURO FILOLÓGICA (OBRIGATÓRIO):
+    Para CADA termo técnico médico, jargão ou conceito complexo utilizado na resposta, você DEVE obrigatoriamente colocar entre parênteses o seu significado popular correspondente para um leigo.
+    Exemplo: "O paciente apresenta Dislipidemia (colesterol alto) e Epistaxe (sangramento no nariz), requerendo análise de Cinetoplasto (parte da célula)."
+    Isso garante que tanto o profissional quanto o paciente/leigo compreendam a análise.
+    
+    Gere um JSON (sem markdown) em Português (Brasil) com esta estrutura exata:
     {
-      "explicacao_simples": "...",
-      "protocolo_pratico": "...",
-      "resultados_praticos": "...",
-      "pontos_atencao": "...",
-      "para_quem_e_indicado": "...",
-      "contraindicacoes_e_riscos": "..."
+      "explicacao_simples": "Resumo executivo do estudo com linguagem técnica refinada.",
+      "protocolo_pratico": "Baseado na evidência, como o profissional deve implementar isso (dosagem, técnica, periodicidade).",
+      "resultados_praticos": "O que esperar na prática em termos de desfecho clínico, baseado no estudo.",
+      "pontos_atencao": "Nuances importantes, vieses detectados ou alertas que apenas um especialista experiente notaria.",
+      "para_quem_e_indicado": "Critérios de inclusão clínica rigorosos para indicação.",
+      "contraindicacoes_e_riscos": "Análise profunda de segurança e perfis de pacientes onde isso deve ser evitado."
     }
   `;
 
@@ -297,7 +343,7 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
 
     ETAPA 2: PERSONA MÉDICO SÊNIOR (COORDENAÇÃO E PARECER FINAL)
     Responsável pela visão holística do paciente, consolidando as informações dos especialistas e do farmacêutico:
-    1. Validar quais interações são clinicamente críticas no mundo real.
+    1. Validar quais interações são clinicamente críticas no world real.
     2. Gerar um PARECER MÉDICO ESTRUTURADO com as seguintes seções em Markdown:
        ### 🩺 Impressão Clínica Geral
        (Resumo do quadro)

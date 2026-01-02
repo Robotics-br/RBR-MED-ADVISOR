@@ -58,7 +58,10 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
               <span className="bg-slate-100 text-slate-400 text-[11px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-sm">
                 #{index + 1}
               </span>
-              <span className={`text-[11px] font-black px-4 py-1.5 rounded-xl border uppercase tracking-[0.15em] shadow-sm ${sourceStyle}`}>
+              <span className={`text-[11px] font-black px-4 py-1.5 rounded-xl border uppercase tracking-[0.15em] shadow-sm flex items-center gap-2 ${sourceStyle}`}>
+                {['jama', 'nejm', 'lancet', 'cochrane'].some(top => (study.fonte_origem || '').toLowerCase().includes(top)) && (
+                  <span className="text-sm">⭐</span>
+                )}
                 {study.fonte_origem || 'Artigo Peer-Reviewed'}
               </span>
               {study.type === 'DIAGNOSIS' && (

@@ -4,14 +4,15 @@ import React from 'react';
 
 interface HeaderProps {
   onLogout?: () => void;
+  onMenu?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ onLogout, onMenu }) => {
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between">
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          <div className="bg-white/50 p-1.5 sm:p-2 rounded-xl shadow-sm border border-slate-100 shrink-0">
+        <div className="flex items-center space-x-3 sm:space-x-4 cursor-pointer group" onClick={onMenu}>
+          <div className="bg-white/50 p-1.5 sm:p-2 rounded-xl shadow-sm border border-slate-100 shrink-0 transition-all group-hover:shadow-md group-hover:border-brand-100">
             <img src="/robotics-logo.png" alt="RoboticsBr" className="h-6 w-auto sm:h-32 sm:w-32 object-contain" />
           </div>
           <div className="min-w-0">
@@ -19,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
             <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] sm:tracking-[0.2em] truncate">Terminal de Pesquisa Clínica</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div className="hidden md:flex flex-col items-end mr-2">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status do Sistema</span>
             <div className="flex items-center">
@@ -27,6 +28,15 @@ export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
               <span className="text-xs font-bold text-slate-600 italic">Pesquisador Sênior Ativo</span>
             </div>
           </div>
+
+          {onMenu && (
+            <button
+              onClick={onMenu}
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-bold text-brand-600 hover:text-white bg-brand-50 hover:bg-brand-600 rounded-lg transition-all border border-brand-100 uppercase tracking-wider whitespace-nowrap"
+            >
+              Menu Principal
+            </button>
+          )}
 
           {onLogout && (
             <button

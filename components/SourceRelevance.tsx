@@ -45,11 +45,13 @@ export const SourceRelevance: React.FC = () => {
 
   return (
     <div className="w-full mt-10 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 text-center">Fontes de Dados Conectadas</p>
-      
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-6 text-center">
+        Varredura Ativa nas Fontes de Prestígio Global
+      </p>
+
       <div className="flex flex-wrap justify-center gap-3">
         {sources.map((source) => (
-          <div 
+          <div
             key={source.id}
             onMouseEnter={() => setActiveInfo(source.id)}
             onMouseLeave={() => setActiveInfo(null)}
