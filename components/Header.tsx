@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout, onMenu }) => {
               onClick={onMenu}
               className="px-6 py-2.5 text-[10px] font-black text-medical-navy uppercase tracking-[0.2em] bg-slate-50 hover:bg-white hover:shadow-premium rounded-xl transition-all border border-transparent hover:border-slate-100"
             >
-              Workbench
+              Menu Principal
             </button>
           )}
 
