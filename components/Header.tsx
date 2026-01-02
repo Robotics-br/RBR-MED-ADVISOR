@@ -1,7 +1,6 @@
 
 import React from 'react';
 
-
 interface HeaderProps {
   onLogout?: () => void;
   onMenu?: () => void;
@@ -9,41 +8,45 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onLogout, onMenu }) => {
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between">
-        <div className="flex items-center space-x-3 sm:space-x-4 cursor-pointer group" onClick={onMenu}>
-          <div className="bg-white/50 p-1.5 sm:p-2 rounded-xl shadow-sm border border-slate-100 shrink-0 transition-all group-hover:shadow-md group-hover:border-brand-100">
-            <img src="/robotics-logo.png" alt="RoboticsBr" className="h-6 w-auto sm:h-32 sm:w-32 object-contain" />
+    <header className="bg-white/70 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-[100] transition-all duration-500">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div
+          className="flex items-center space-x-5 cursor-pointer group"
+          onClick={onMenu}
+        >
+          <div className="bg-white p-2.5 rounded-2xl shadow-sm border border-slate-100 transition-all duration-500 group-hover:shadow-premium group-hover:scale-105 group-active:scale-95">
+            <img src="/robotics-logo.png" alt="RoboticsBr" className="h-8 w-auto object-contain brightness-90 group-hover:brightness-100" />
           </div>
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none mb-1 truncate">MedEvidência <span className="text-blue-600">Pro</span></h1>
-            <p className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] sm:tracking-[0.2em] truncate">Terminal de Pesquisa Clínica</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status do Sistema</span>
-            <div className="flex items-center">
-              <span className="w-2 h-2 mr-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200 animate-pulse"></span>
-              <span className="text-xs font-bold text-slate-600 italic">Pesquisador Sênior Ativo</span>
+          <div className="hidden sm:block">
+            <h1 className="text-xl font-display font-black text-medical-navy tracking-tight leading-none mb-1">
+              MedEvidência <span className="text-brand-500">Pro</span>
+            </h1>
+            <div className="flex items-center space-x-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Protocolos 2026 Ativos</p>
             </div>
           </div>
+        </div>
 
+        <div className="flex items-center gap-3">
           {onMenu && (
             <button
               onClick={onMenu}
-              className="px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-bold text-brand-600 hover:text-white bg-brand-50 hover:bg-brand-600 rounded-lg transition-all border border-brand-100 uppercase tracking-wider whitespace-nowrap"
+              className="px-6 py-2.5 text-[10px] font-black text-medical-navy uppercase tracking-[0.2em] bg-slate-50 hover:bg-white hover:shadow-premium rounded-xl transition-all border border-transparent hover:border-slate-100"
             >
-              Menu Principal
+              Workbench
             </button>
           )}
 
           {onLogout && (
             <button
               onClick={onLogout}
-              className="px-3 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-bold text-slate-500 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-lg transition-all border border-slate-100 uppercase tracking-wider whitespace-nowrap"
+              className="w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-all border border-transparent hover:border-red-100"
+              title="Sair do Sistema"
             >
-              Sair
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
             </button>
           )}
         </div>

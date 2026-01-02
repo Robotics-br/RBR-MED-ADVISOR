@@ -204,73 +204,64 @@ const App: React.FC = () => {
   }
 
   const MainMenu: React.FC = () => (
-    <div className="max-w-6xl mx-auto px-4 py-12 sm:py-20 animate-fade-in">
-      <div className="text-center mb-16 sm:mb-24">
-        <h2 className="text-4xl sm:text-6xl font-display font-bold text-slate-900 mb-6 tracking-tight">
-          O que deseja <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600">analisar hoje?</span>
+    <div className="max-w-6xl mx-auto px-6 py-12 sm:py-32 animate-fade-in text-center">
+      <div className="mb-24">
+        <h2 className="text-5xl sm:text-7xl font-display font-black text-medical-navy mb-8 tracking-tight leading-[1.1]">
+          Hub de Inteligência <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-brand-500">Médica de Precisão</span>
         </h2>
-        <p className="text-slate-500 text-lg sm:text-xl max-w-2xl mx-auto font-light">
-          Selecione um dos módulos especializados para iniciar sua jornada de evidência científica.
+        <p className="text-slate-500 text-lg sm:text-xl max-w-2xl mx-auto font-medium opacity-80">
+          Acesse evidências científicas de alto impacto através de módulos especializados de investigação.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {[
           {
-            id: 'discover' as SearchMode,
-            title: 'Tratamentos',
-            desc: 'Descubra terapias e avanços clínicos para diagnósticos específicos.',
-            icon: (
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            ),
-            color: 'blue'
+            id: 'discover',
+            title: 'Protocolos',
+            subtitle: 'Tratamentos & Terapias',
+            desc: 'Investigação de novas drogas e avanços terapêuticos globais.',
+            icon: '🔬',
+            color: 'teal'
           },
           {
-            id: 'verify' as SearchMode,
-            title: 'Eficácia',
-            desc: 'Valide a evidência e os resultados de medicamentos em condições particulares.',
-            icon: (
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            ),
-            color: 'indigo'
+            id: 'verify',
+            title: 'Validação',
+            subtitle: 'Eficácia Clínica',
+            desc: 'Escaneamento de evidências científicas para fármacos específicos.',
+            icon: '⚖️',
+            color: 'brand'
           },
           {
-            id: 'interactions' as SearchMode,
-            title: 'Interações',
-            desc: 'Análise detalhada de segurança e compatibilidade entre múltiplos fármacos.',
-            icon: (
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            ),
-            color: 'orange'
+            id: 'interactions',
+            title: 'Segurança',
+            subtitle: 'Risco de Interações',
+            desc: 'Análise de compatibilidade e segurança em regimes polifarmácia.',
+            icon: '🛡️',
+            color: 'slate'
           }
         ].map((item) => (
           <button
             key={item.id}
-            onClick={() => { setActiveMode(item.id); setShowMenu(false); }}
-            className="group relative bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-10 shadow-card border border-white/50 transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:bg-white text-left overflow-hidden"
+            onClick={() => { setActiveMode(item.id as SearchMode); setShowMenu(false); }}
+            className="card-hover group bg-white border border-slate-100 rounded-[3rem] p-10 flex flex-col items-center text-center relative overflow-hidden shadow-premium"
           >
-            <div className={`absolute top-0 right-0 w-32 h-32 bg-brand-500/5 rounded-bl-[100px] transition-all duration-500 group-hover:scale-150`}></div>
-
-            <div className={`w-16 h-16 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-8 shadow-sm group-hover:bg-brand-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand-500/30 transition-all duration-500 group-hover:rotate-6`}>
+            <div className="w-20 h-20 rounded-[2rem] flex items-center justify-center text-4xl mb-8 bg-slate-50 group-hover:bg-brand-50 group-hover:rotate-6 transition-all duration-500">
               {item.icon}
             </div>
 
-            <h3 className="text-2xl font-bold text-slate-900 mb-4">{item.title}</h3>
-            <p className="text-slate-500 leading-relaxed mb-8 text-base">
+            <div className="space-y-2 mb-8">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 group-hover:text-brand-500 transition-colors">{item.title}</span>
+              <h3 className="text-2xl font-bold text-medical-navy">{item.subtitle}</h3>
+            </div>
+
+            <p className="text-slate-500 text-sm leading-relaxed mb-10 h-12">
               {item.desc}
             </p>
 
-            <div className="flex items-center text-brand-600 font-bold text-sm uppercase tracking-wider group-hover:translate-x-2 transition-all duration-300">
-              Iniciar Módulo
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+            <div className="w-full py-5 bg-medical-navy text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] group-hover:bg-brand-600 shadow-lg group-hover:shadow-brand-500/20 transition-all duration-300">
+              Acessar Módulo
             </div>
           </button>
         ))}
@@ -282,173 +273,146 @@ const App: React.FC = () => {
     <div className="min-h-screen flex flex-col font-sans text-slate-600 bg-transparent">
       <Header onLogout={handleLogout} onMenu={activeMode ? handleGoToMenu : undefined} />
 
-      <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!activeMode ? (
           <MainMenu />
         ) : (
-          <>
-            <section className="text-center mb-20 animate-fade-in relative z-10">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-brand-500/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+          <div className="animate-fade-in pt-12">
+            <section className="text-center mb-24 relative z-10">
+              <div className="mb-12">
+                <h2 className="text-4xl sm:text-6xl font-display font-black text-medical-navy mb-6 tracking-tight">
+                  {activeMode === 'discover' && <span className="text-teal-600">Tratamentos & Terapias</span>}
+                  {activeMode === 'verify' && <span className="text-brand-500">Validação de Eficácia</span>}
+                  {activeMode === 'interactions' && <span className="text-slate-700">Segurança & Interações</span>}
+                </h2>
+                <div className="flex justify-center gap-3">
+                  <div className="h-1.5 w-12 bg-slate-200 rounded-full"></div>
+                  <div className="h-1.5 w-3 bg-slate-200 rounded-full"></div>
+                  <div className="h-1.5 w-3 bg-slate-200 rounded-full"></div>
+                </div>
+              </div>
 
-              <span className="inline-block py-1 px-3 rounded-full bg-brand-50 border border-brand-100 text-brand-600 text-xs font-bold tracking-wider uppercase mb-6 shadow-sm">
-                Terminal de Inteligência Médica v2.0
-              </span>
-
-              <h2 className="text-3xl sm:text-6xl md:text-7xl font-display font-bold text-slate-900 mb-4 sm:mb-6 tracking-tight leading-[1.2] sm:leading-[1.1] px-2">
-                {activeMode === 'discover' && <>Explorador de <br className="hidden sm:block" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600">Tratamentos</span></>}
-                {activeMode === 'verify' && <>Análise de <br className="hidden sm:block" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600">Eficácia Clínica</span></>}
-                {activeMode === 'interactions' && <>Segurança & <br className="hidden sm:block" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600">Interações</span></>}
-              </h2>
-
-              <p className="text-slate-500 max-w-2xl mx-auto text-base sm:text-xl mb-8 sm:mb-12 leading-relaxed font-light px-4">
-                {activeMode === 'discover' && "Acesso instantâneo a ensaios clínicos globais (2000-2025). Análise consolidada para tomada de decisão."}
-                {activeMode === 'verify' && "Verificação rigorosa de farmacoterapia baseada em evidências científicas de alto impacto."}
-                {activeMode === 'interactions' && "Monitoramento avançado de risco e incompatibilidade medicamentosa em tempo real."}
-              </p>
-
-              {/* Tabs for quick switching */}
-              <div className="flex justify-center mb-6 sm:mb-10 overflow-x-auto pb-4 sm:pb-0 px-4">
-                <div className="glass p-1 sm:p-1.5 rounded-full inline-flex shadow-sm min-w-max">
-                  <button
-                    onClick={() => setActiveMode('discover')}
-                    className={`px-4 sm:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${activeMode === 'discover'
-                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
-                      : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
-                      }`}
-                  >
-                    Tratamentos
-                  </button>
-                  <button
-                    onClick={() => setActiveMode('verify')}
-                    className={`px-4 sm:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${activeMode === 'verify'
-                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
-                      : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
-                      }`}
-                  >
-                    Eficácia
-                  </button>
-                  <button
-                    onClick={() => setActiveMode('interactions')}
-                    className={`px-4 sm:px-8 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${activeMode === 'interactions'
-                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/30'
-                      : 'text-slate-500 hover:text-brand-600 hover:bg-white/50'
-                      }`}
-                  >
-                    Interações
-                  </button>
+              {/* Advanced Tabs */}
+              <div className="flex justify-center mb-20 overflow-hidden">
+                <div className="bg-slate-100/50 p-2 rounded-[1.5rem] flex border border-slate-200/50 backdrop-blur-sm">
+                  {['discover', 'verify', 'interactions'].map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => { setActiveMode(mode as SearchMode); setData(null); setError(null); setQuery(''); setMedicationQuery(''); }}
+                      className={`px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeMode === mode
+                        ? 'bg-white text-medical-navy shadow-premium'
+                        : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                    >
+                      {mode === 'discover' ? 'Tratamentos' : mode === 'verify' ? 'Eficácia' : 'Segurança'}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {activeMode === 'interactions' ? (
                 <DrugInteraction />
               ) : (
-                <div className="max-w-3xl mx-auto px-4">
-                  <form onSubmit={handleSearch} className="glass p-6 sm:p-10 rounded-[2rem] shadow-card relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 via-indigo-500 to-brand-400 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                    <div className="grid grid-cols-1 gap-6">
-                      <div className="space-y-2 text-left relative">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                          Enfermidade ou Condição
+                <div className="max-w-2xl mx-auto relative z-20">
+                  <form onSubmit={handleSearch} className="bg-white border border-slate-100 p-12 rounded-[3.5rem] shadow-premium space-y-10 text-left">
+                    <div className="space-y-8">
+                      {/* Diagnostic Field */}
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">
+                          Diagnóstico ou Condição Clínicas
                         </label>
-                        <div className="relative">
+                        <div className="relative group">
                           <input
                             type="text"
                             value={query}
                             onChange={(e) => handleCidSearch(e.target.value)}
                             onFocus={() => { if (cidResults.length > 0) setShowCidDropdown(true); }}
                             onBlur={() => setTimeout(() => setShowCidDropdown(false), 200)}
-                            placeholder="Ex: Alzheimer, Artrite Reumatoide..."
-                            className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+                            placeholder="Ex: Doença de Crohn, TEA..."
+                            className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all text-xl font-bold text-medical-navy placeholder:text-slate-300 outline-none"
                             disabled={loading}
                           />
                           {searchingCid && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                              <div className="animate-spin h-5 w-5 border-3 border-brand-500 border-t-transparent rounded-full font-bold"></div>
+                            <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                              <div className="animate-spin h-6 w-6 border-2 border-brand-500 border-t-transparent rounded-full"></div>
                             </div>
                           )}
                         </div>
 
                         {showCidDropdown && (
-                          <div className="absolute z-[100] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="absolute z-[100] w-full mt-3 bg-white border border-slate-100 rounded-3xl shadow-premium max-h-80 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-4 duration-300">
                             {cidResults.map((cid, i) => (
                               <button
                                 key={i}
                                 type="button"
                                 onClick={() => selectCid(cid)}
-                                className="w-full text-left px-6 py-4 hover:bg-brand-50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors"
+                                className="w-full text-left px-8 py-5 hover:bg-slate-50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors"
                               >
-                                <span className="text-[10px] font-black text-brand-600 uppercase tracking-widest">{cid.codigo}</span>
-                                <span className="text-base text-slate-700 font-bold">{cid.descricao}</span>
+                                <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest leading-none">{cid.codigo}</span>
+                                <span className="text-lg text-medical-navy font-bold leading-tight">{cid.descricao}</span>
                               </button>
                             ))}
                           </div>
                         )}
                       </div>
 
-                      <div className={`space-y-2 text-left transition-all duration-500 relative ${activeMode === 'verify' ? 'opacity-100 max-h-48' : 'opacity-0 max-h-0 overflow-hidden shadow-none'}`}>
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
-                          Nome do Medicamento ou Terapia
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={medicationQuery}
-                            onChange={(e) => handleMedSearch(e.target.value)}
-                            onFocus={() => { if (medResults.length > 0) setShowMedDropdown(true); }}
-                            onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
-                            placeholder="Ex: Lecanemabe..."
-                            className="w-full px-6 py-4 bg-white/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
-                            disabled={loading}
-                          />
-                          {searchingMed && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                              <div className="animate-spin h-5 w-5 border-3 border-brand-500 border-t-transparent rounded-full font-bold"></div>
+                      {/* Medication Field (for Verify mode) */}
+                      {activeMode === 'verify' && (
+                        <div className="space-y-3 animate-fade-in relative z-20">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">
+                            Fármaco em Validação
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={medicationQuery}
+                              onChange={(e) => handleMedSearch(e.target.value)}
+                              onFocus={() => { if (medResults.length > 0) setShowMedDropdown(true); }}
+                              onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
+                              placeholder="Ex: Adalimumabe..."
+                              className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all text-xl font-bold text-medical-navy placeholder:text-slate-300 outline-none"
+                              disabled={loading}
+                            />
+                            {searchingMed && (
+                              <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                                <div className="animate-spin h-6 w-6 border-2 border-brand-500 border-t-transparent rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+
+                          {showMedDropdown && (
+                            <div className="absolute z-[100] w-full mt-3 bg-white border border-slate-100 rounded-3xl shadow-premium max-h-80 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                              {medResults.map((med, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => selectMed(med)}
+                                  className="w-full text-left px-8 py-5 hover:bg-slate-50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors"
+                                >
+                                  <span className="text-lg text-medical-navy font-bold leading-tight">{med.nome}</span>
+                                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{med.principioAtivo}</span>
+                                </button>
+                              ))}
                             </div>
                           )}
                         </div>
-
-                        {showMedDropdown && (
-                          <div className="absolute z-[100] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                            {medResults.map((med, i) => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => selectMed(med)}
-                                className="w-full text-left px-6 py-4 hover:bg-brand-50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors"
-                              >
-                                <span className="text-base text-slate-700 font-bold">{med.nome}</span>
-                                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{med.principioAtivo}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
 
-                    <div className="mt-8">
-                      <button
-                        type="submit"
-                        disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
-                        className="w-full flex items-center justify-center px-8 py-5 bg-slate-900 text-white rounded-xl font-bold text-lg hover:bg-brand-600 hover:shadow-brand-500/25 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
-                      >
-                        {loading ? (
-                          <div className="flex items-center space-x-3">
-                            <svg className="animate-spin h-5 w-5 text-white/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Analisando Bases de Dados...</span>
-                          </div>
-                        ) : (
-                          <span>{activeMode === 'discover' ? 'Descobrir Avanços' : 'Verificar Evidência'}</span>
-                        )}
-                      </button>
-                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
+                      className="w-full flex items-center justify-center px-10 py-7 bg-medical-navy text-white rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-brand-600 transition-all duration-500 shadow-xl disabled:opacity-20 disabled:cursor-not-allowed group/btn overflow-hidden relative"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-brand-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"></div>
+                      <span className="relative z-10">
+                        {loading ? 'Processando Investigação...' : 'Iniciar Investigação'}
+                      </span>
+                    </button>
                   </form>
 
-                  <div className="mt-8 border-t border-slate-100 pt-8">
-                    {activeMode !== 'interactions' && <SourceRelevance />}
+                  <div className="mt-16 opacity-80">
+                    <SourceRelevance />
                   </div>
                 </div>
               )}
@@ -456,22 +420,24 @@ const App: React.FC = () => {
 
             {loading && (
               <div className="flex flex-col items-center justify-center py-24 animate-fade-in">
-                <div className="relative w-20 h-20 mb-8">
-                  <div className="absolute inset-0 border-4 border-brand-100 rounded-full"></div>
+                <div className="relative w-24 h-24 mb-10">
+                  <div className="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
                   <div className="absolute inset-0 border-4 border-brand-500 rounded-full border-t-transparent animate-spin"></div>
+                  <div className="absolute inset-4 border-2 border-teal-500/20 rounded-full animate-pulse"></div>
                 </div>
-                <p className="text-brand-600 font-bold text-lg animate-pulse text-center">{searchStatus}</p>
+                <p className="text-medical-navy font-black text-sm uppercase tracking-[0.4em] animate-pulse text-center">{searchStatus}</p>
+                <span className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Varredura Global em Tempo Real</span>
               </div>
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-100 rounded-2xl p-8 text-center max-w-xl mx-auto mb-10">
-                <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">!</div>
-                <h3 className="text-red-900 font-bold text-lg mb-2">Erro na Investigação</h3>
-                <p className="text-red-600 mb-6">{error}</p>
+              <div className="bg-red-50 border border-red-100 rounded-[3rem] p-12 text-center max-w-xl mx-auto mb-20 shadow-sm animate-fade-in">
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-8 text-2xl font-bold">!</div>
+                <h3 className="text-red-900 font-black text-xl mb-4 tracking-tight">Falha na Investigação</h3>
+                <p className="text-red-600 mb-10 font-medium leading-relaxed">{error}</p>
                 <button
                   onClick={() => handleSearch()}
-                  className="px-6 py-2 bg-white border border-red-200 text-red-700 rounded-lg hover:bg-red-50 font-medium text-sm transition-colors"
+                  className="px-12 py-4 bg-white border border-red-200 text-red-700 rounded-xl hover:bg-red-50 font-black text-[10px] uppercase tracking-[0.3em] transition-all shadow-sm"
                 >
                   Tentar Novamente
                 </button>
@@ -479,60 +445,60 @@ const App: React.FC = () => {
             )}
 
             {data && !loading && (
-              <div className="animate-fade-in space-y-16 pb-20">
-
-                {/* Diagnósticos em Destaque */}
+              <div className="space-y-32 pb-32 animate-fade-in">
+                {/* Visual Protocol Section */}
                 <ExamChecklist studies={data.studies} onSelect={handleSelectStudy} />
 
-                <div className="space-y-8">
-                  <div className="flex items-end justify-between px-2 border-b border-slate-200 pb-4">
+                {/* Main Evidence Grid */}
+                <div className="space-y-12">
+                  <div className="flex items-center justify-between px-4 border-l-4 border-teal-500 py-2">
                     <div>
-                      <h3 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">
-                        {activeMode === 'discover' ? "Tratamentos & Terapias" : "Análise de Eficácia"}
+                      <h3 className="text-4xl font-display font-black text-medical-navy tracking-tight">
+                        {activeMode === 'discover' ? "Terapias Estruturadas" : "Resultados da Validação"}
                       </h3>
-                      <p className="text-slate-500 mt-1">Intervenções terapêuticas identificadas.</p>
+                      <p className="text-slate-400 mt-2 font-medium">Intervenções terapêuticas classificadas por relevância.</p>
                     </div>
                   </div>
 
-                  {data.studies.filter(s => s.type !== 'DIAGNOSIS').length > 0 ? (
-                    <div className={`grid gap-6 ${activeMode === 'verify' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
-                      {data.studies.filter(s => s.type !== 'DIAGNOSIS').map((study, idx) => (
-                        <StudyCard
-                          key={idx}
-                          study={study}
-                          index={idx}
-                          onSelect={handleSelectStudy}
-                          isWide={activeMode === 'verify'}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
-                      <p className="text-slate-400 text-lg font-medium">Nenhum tratamento específico listado nesta seção.</p>
-                    </div>
-                  )}
+                  <div className={`grid gap-10 ${activeMode === 'verify' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+                    {data.studies.filter(s => s.type !== 'DIAGNOSIS').map((study, idx) => (
+                      <StudyCard
+                        key={idx}
+                        study={study}
+                        index={idx}
+                        onSelect={handleSelectStudy}
+                        isWide={activeMode === 'verify'}
+                      />
+                    ))}
+                  </div>
                 </div>
 
+                {/* Detailed Sources */}
                 {data.sources.length > 0 && (
-                  <div className="glass p-8 rounded-3xl border border-white/50">
-                    <h4 className="text-slate-900 font-bold text-lg mb-6 flex items-center">
-                      <span className="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center mr-3">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                      </span>
-                      Fontes Referenciadas
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="bg-slate-50 p-16 rounded-[4rem] border border-slate-100">
+                    <div className="text-center mb-12">
+                      <span className="text-[10px] font-black text-brand-600 uppercase tracking-[0.4em] mb-4 block">Rastreabilidade Médica</span>
+                      <h4 className="text-3xl font-display font-black text-medical-navy tracking-tight">
+                        Citações & Referências
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {data.sources.map((source, idx) => (
                         <a
                           key={idx}
                           href={source.uri}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex items-center p-4 bg-white/50 hover:bg-white hover:shadow-md rounded-xl transition-all border border-slate-100"
+                          className="group flex flex-col p-8 bg-white hover:bg-brand-50 hover:shadow-2xl hover:border-brand-500/20 rounded-3xl transition-all border border-slate-100"
                         >
-                          <div className="w-2 h-2 rounded-full bg-brand-400 mr-3 group-hover:bg-brand-600 transition-colors"></div>
-                          <span className="text-slate-600 group-hover:text-brand-700 font-medium text-sm truncate">
-                            {source.title || source.uri}
+                          <div className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 flex items-center justify-center mb-4 group-hover:bg-brand-500 group-hover:text-white transition-all">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                          </div>
+                          <span className="text-medical-navy font-black text-sm mb-2 truncate group-hover:text-brand-700 transition-colors">
+                            {source.title || 'Referência Excluisva'}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium truncate opacity-60 group-hover:opacity-100">
+                            {source.uri}
                           </span>
                         </a>
                       ))}
@@ -540,18 +506,19 @@ const App: React.FC = () => {
                   </div>
                 )}
 
+                {/* Analytical Dashboard */}
                 {data.studies.filter(s => !s.isWarning).length > 0 && (
-                  <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-card border border-slate-100">
+                  <div className="bg-white rounded-[4rem] p-12 shadow-premium border border-slate-50">
                     <VisualAnalysis studies={data.studies.filter(s => !s.isWarning)} />
                   </div>
                 )}
-
               </div>
             )}
-          </>
+          </div>
         )}
       </main>
 
+      {/* Persistence Modals */}
       {selectedStudy && (
         <StudyDetailsModal
           study={selectedStudy}
@@ -561,16 +528,22 @@ const App: React.FC = () => {
         />
       )}
 
-      <footer className="bg-white/80 backdrop-blur border-t border-slate-100 py-12 mt-auto text-center">
+      {/* Professional Footer */}
+      <footer className="bg-slate-50 border-t border-slate-100 py-24 mt-auto text-center">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">
-              MedEvidência Pro • Análise Clínica via IA
-            </p>
-
+          <div className="flex flex-col items-center justify-center space-y-12">
             <div className="flex flex-col items-center">
-              <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-slate-300 mb-2">Desenvolvido por</p>
-              <img src="/robotics-logo.png" alt="RoboticsBr" className="h-8 w-auto opacity-70 hover:opacity-100 transition-opacity duration-300 filter grayscale hover:grayscale-0" />
+              <span className="text-[10px] uppercase tracking-[0.5em] font-black text-slate-300 mb-6">Partner Technology</span>
+              <img src="/robotics-logo.png" alt="RoboticsBr" className="h-10 w-auto opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700" />
+            </div>
+            <div className="space-y-4">
+              <p className="text-[11px] font-black text-medical-navy uppercase tracking-[0.3em]">
+                MedEvidência Pro • Sistema de Inteligência Científica
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 max-w-md mx-auto leading-relaxed">
+                Este sistema utiliza modelos de linguagem de larga escala para fins informativos.
+                Toda decisão clínica deve ser validada pelo médico assistente.
+              </p>
             </div>
           </div>
         </div>
@@ -578,12 +551,15 @@ const App: React.FC = () => {
 
       <style>{`
         @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in {
-          animation: fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: fade-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        .font-black { font-weight: 900; }
+        .tracking-tight { letter-spacing: -0.025em; }
+        .shadow-premium { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.1); }
       `}</style>
     </div>
   );
