@@ -1,18 +1,26 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Medication, PatientProfile, Cid10Result, MedicationSuggestion, DiagnosisResult } from '../types';
 import { searchCid10, searchMedication, runAllopathicDiagnosis, runHomeopathicDiagnosis } from '../services/openRouterService';
 import { DiagnosisModal } from './DiagnosisModal';
 
 const commonDiseases = [
-    "Acidente Vascular Cerebral (AVC)", "Anemia Falciforme", "Apneia Obstrutiva do Sono", "Arritmia Cardíaca", "Artrite Gotosa", "Artrose (Osteoartrite)", "Asma",
-    "Câncer", "Cirrose hepática", "Demência", "Depressão", "Diabetes Gestacional", "Diabetes tipo 1 (autoimune)", "Diabetes tipo 2 (comum)", "Diabetes-Pré",
-    "Dislipidemia (Colesterol alto)", "Distúrbios da Tireoide", "Doença Arterial Coronariana", "Doença do Refluxo Gastroesofágico",
-    "Doença Pulmonar Obstrutiva Crônica (DPOC)", "Doença Renal Crônica", "Dor Lombar Crônica", "Enxaqueca Crônica",
-    "Esclerose Múltipla", "Fibromialgia", "Gastrite",
-    "Hipertensão Arterial Sistêmica", "Hipotireoidismo", "Insuficiência Cardíaca", "Neuropatia periférica",
-    "Obesidade", "Osteoporose", "Sinusite Crônica", "Transtornos de Ansiedade", "Zumbido no ouvido (tinnitus)"
+    "AVC", "Anemia Falciforme", "Apneia do Sono", "Arritmia", "Artrite/Artrose", "Asma",
+    "Câncer", "Cirrose", "Demência", "Depressão", "Diabetes tipo 1", "Diabetes tipo 2", "Pré-Diabetes",
+    "Dislipidemia", "Distúrbio Tireoidiano", "Doença Coronariana", "Refluxo",
+    "DPOC", "Doença Renal Crônica", "Dor Lombar", "Enxaqueca",
+    "Hipertensão", "Hipotireoidismo", "Insuficiência Cardíaca",
+    "Obesidade", "Osteoporose", "Ansiedade"
 ];
+
+const SectionHeader = ({ number, title, isOpen, toggle, color }: any) => (
+    <button onClick={toggle} className={`w-full flex items-center justify-between p-6 rounded-2xl transition-all ${isOpen ? `bg-${color}-50 border-2 border-${color}-200` : 'bg-slate-50 border border-slate-200'}`}>
+        <div className="flex items-center gap-4">
+            <span className={`w-10 h-10 rounded-xl ${isOpen ? `bg-${color}-600 text-white` : 'bg-slate-200 text-slate-600'} flex items-center justify-center font-bold text-sm`}>{number}</span>
+            <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+        </div>
+        <svg className={`w-6 h-6 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+    </button>
+);
 
 export const AiDiagnosis: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -20,15 +28,17 @@ export const AiDiagnosis: React.FC = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [diagnosisData, setDiagnosisData] = useState<DiagnosisResult | null>(null);
 
-    // Form State
+    const [expandedSections, setExpandedSections] = useState({
+        identification: true, vitals: false, history: false, habits: false, meds: false, symptoms: true
+    });
+
     const [profile, setProfile] = useState<PatientProfile>({
-        patientName: '',
-        age: '',
-        gender: '',
-        weight: '',
-        diseases: '',
-        otherSubstances: '',
-        medications: []
+        patientName: '', age: '', gender: '', weight: '', height: '',
+        bloodPressure: '', heartRate: '', temperature: '', oxygenSaturation: '',
+        diseases: '', allergies: '', previousSurgeries: '', familyHistory: '',
+        smoking: 'Não', alcohol: 'Não consome', physicalActivity: 'Sedentário',
+        isPregnant: false, gestationalWeeks: '', menopause: false, lastMenstrualPeriod: '',
+        otherSubstances: '', medications: [], recentExams: '', vaccinationStatus: ''
     });
 
     const [symptoms, setSymptoms] = useState('');
@@ -36,50 +46,53 @@ export const AiDiagnosis: React.FC = () => {
     const [otherDiseasesList, setOtherDiseasesList] = useState<string[]>([]);
     const [otherDiseaseInput, setOtherDiseaseInput] = useState('');
 
-    // Substances State
-    const [substancesList, setSubstancesList] = useState<string[]>([]);
-    const [substanceInput, setSubstanceInput] = useState('');
+    const [currentMed, setCurrentMed] = useState<Medication>({
+        name: '', dosage: '', form: '', frequency: '', schedule: '', duration: '', usageType: 'CONTINUOUS', reason: ''
+    });
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-    // Sync state with profile.diseases
-    React.useEffect(() => {
+    const [medResults, setMedResults] = useState<MedicationSuggestion[]>([]);
+    const [showMedDropdown, setShowMedDropdown] = useState(false);
+    const [searchingMed, setSearchingMed] = useState(false);
+
+    // CID-10 para Comorbidades
+    const [cidResults, setCidResults] = useState<Cid10Result[]>([]);
+    const [showCidDropdown, setShowCidDropdown] = useState(false);
+    const [searchingCid, setSearchingCid] = useState(false);
+    const [cidSearchInput, setCidSearchInput] = useState('');
+
+    // CID-10 para Motivo do Medicamento
+    const [cidReasonResults, setCidReasonResults] = useState<Cid10Result[]>([]);
+    const [showCidReasonDropdown, setShowCidReasonDropdown] = useState(false);
+    const [searchingCidReason, setSearchingCidReason] = useState(false);
+
+    useEffect(() => {
         const all = [...selectedDiseases, ...otherDiseasesList];
         setProfile(prev => ({ ...prev, diseases: all.join(', ') }));
     }, [selectedDiseases, otherDiseasesList]);
 
-    // Sync state with profile.otherSubstances
-    React.useEffect(() => {
-        setProfile(prev => ({ ...prev, otherSubstances: substancesList.join(', ') }));
-    }, [substancesList]);
-
-    const toggleDisease = (disease: string) => {
-        setSelectedDiseases(prev =>
-            prev.includes(disease)
-                ? prev.filter(d => d !== disease)
-                : [...prev, disease]
-        );
+    const calculateIMC = () => {
+        if (profile.weight && profile.height) {
+            const w = parseFloat(profile.weight);
+            const h = parseFloat(profile.height) / 100;
+            if (w > 0 && h > 0) return (w / (h * h)).toFixed(1);
+        }
+        return null;
     };
 
-    // Temporary state for adding a medication
-    const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const [currentMed, setCurrentMed] = useState<Medication>({
-        name: '',
-        dosage: '',
-        form: '',
-        frequency: '',
-        schedule: '',
-        duration: '',
-        usageType: 'CONTINUOUS',
-        reason: ''
-    });
+    const getCompletionPercentage = () => {
+        const required = [profile.age, profile.gender, profile.weight, symptoms];
+        const optional = [profile.patientName, profile.bloodPressure, profile.allergies, profile.diseases];
+        const filled = [...required, ...optional].filter(f => f && f.toString().trim()).length;
+        return Math.round((filled / (required.length + optional.length)) * 100);
+    };
 
-    // CID-10 Autocomplete State
-    const [cidResults, setCidResults] = useState<Cid10Result[]>([]);
-    const [showCidDropdown, setShowCidDropdown] = useState(false);
-    const [searchingCid, setSearchingCid] = useState(false);
+    const toggleSection = (section: keyof typeof expandedSections) => {
+        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     const handleCidSearch = async (val: string) => {
-        setCurrentMed({ ...currentMed, reason: val });
-
+        setCidSearchInput(val);
         if (val.length >= 3) {
             setSearchingCid(true);
             try {
@@ -87,7 +100,7 @@ export const AiDiagnosis: React.FC = () => {
                 setCidResults(results);
                 setShowCidDropdown(results.length > 0);
             } catch (err) {
-                console.error("Erro na busca CID-10:", err);
+                console.error(err);
             } finally {
                 setSearchingCid(false);
             }
@@ -97,20 +110,44 @@ export const AiDiagnosis: React.FC = () => {
         }
     };
 
-    const selectCid = (cid: Cid10Result) => {
-        setCurrentMed({ ...currentMed, reason: `${cid.codigo} - ${cid.descricao}` });
+    const handleSelectCid = (cid: Cid10Result) => {
+        const cidText = `${cid.codigo} - ${cid.descricao}`;
+        if (!otherDiseasesList.includes(cidText)) {
+            setOtherDiseasesList([...otherDiseasesList, cidText]);
+        }
+        setCidSearchInput('');
         setShowCidDropdown(false);
         setCidResults([]);
     };
 
-    // Medication Autocomplete State
-    const [medResults, setMedResults] = useState<MedicationSuggestion[]>([]);
-    const [showMedDropdown, setShowMedDropdown] = useState(false);
-    const [searchingMed, setSearchingMed] = useState(false);
+    const handleCidReasonSearch = async (val: string) => {
+        setCurrentMed({ ...currentMed, reason: val });
+        if (val.length >= 3) {
+            setSearchingCidReason(true);
+            try {
+                const results = await searchCid10(val);
+                setCidReasonResults(results);
+                setShowCidReasonDropdown(results.length > 0);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setSearchingCidReason(false);
+            }
+        } else {
+            setCidReasonResults([]);
+            setShowCidReasonDropdown(false);
+        }
+    };
+
+    const handleSelectCidReason = (cid: Cid10Result) => {
+        const cidText = `${cid.codigo} - ${cid.descricao}`;
+        setCurrentMed({ ...currentMed, reason: cidText });
+        setShowCidReasonDropdown(false);
+        setCidReasonResults([]);
+    };
 
     const handleMedSearch = async (val: string) => {
         setCurrentMed({ ...currentMed, name: val });
-
         if (val.length >= 3) {
             setSearchingMed(true);
             try {
@@ -118,7 +155,7 @@ export const AiDiagnosis: React.FC = () => {
                 setMedResults(results);
                 setShowMedDropdown(results.length > 0);
             } catch (err) {
-                console.error("Erro na busca de medicamentos:", err);
+                console.error(err);
             } finally {
                 setSearchingMed(false);
             }
@@ -128,17 +165,9 @@ export const AiDiagnosis: React.FC = () => {
         }
     };
 
-    const selectMed = (med: MedicationSuggestion) => {
-        setCurrentMed({ ...currentMed, name: med.nome });
-        setShowMedDropdown(false);
-        setMedResults([]);
-    };
-
     const handleAddMed = () => {
         if (!currentMed.name) return;
-
         if (editingIndex !== null) {
-            // Update existing
             setProfile(prev => {
                 const updated = [...prev.medications];
                 updated[editingIndex] = currentMed;
@@ -146,430 +175,324 @@ export const AiDiagnosis: React.FC = () => {
             });
             setEditingIndex(null);
         } else {
-            // Add new
-            setProfile(prev => ({
-                ...prev,
-                medications: [...prev.medications, currentMed]
-            }));
+            setProfile(prev => ({ ...prev, medications: [...prev.medications, currentMed] }));
         }
-
-        setCurrentMed({
-            name: '',
-            dosage: '',
-            form: '',
-            frequency: '',
-            schedule: '',
-            duration: '',
-            usageType: 'CONTINUOUS',
-            reason: ''
-        });
+        setCurrentMed({ name: '', dosage: '', form: '', frequency: '', schedule: '', duration: '', usageType: 'CONTINUOUS', reason: '' });
     };
 
     const handleEditMed = (index: number) => {
         setCurrentMed(profile.medications[index]);
         setEditingIndex(index);
-    };
-
-    const handleCancelEdit = () => {
-        setEditingIndex(null);
-        setCurrentMed({
-            name: '',
-            dosage: '',
-            form: '',
-            frequency: '',
-            schedule: '',
-            duration: '',
-            usageType: 'CONTINUOUS',
-            reason: ''
-        });
-    };
-
-    const handleRemoveMed = (index: number) => {
-        setProfile(prev => ({
-            ...prev,
-            medications: prev.medications.filter((_, i) => i !== index)
-        }));
+        // Scroll suave até o formulário
+        const medSection = document.querySelector('[data-section="meds-form"]');
+        medSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
     const handleAnalyze = async (type: 'ALLOPATHIC' | 'HOMEOPATHIC') => {
         if (!profile.age || !profile.gender || !profile.weight) {
-            setError("Por favor, preencha Idade, Gênero e Peso do paciente.");
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setError("Preencha: Idade, Gênero e Peso.");
             return;
         }
-
         if (!symptoms.trim()) {
-            setError("O campo de Sintomas / Queixas é obrigatório para o diagnóstico.");
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setError("Campo Sintomas é obrigatório.");
             return;
         }
-
         setLoading(true);
         setError(null);
         setModalOpen(true);
         setDiagnosisData(null);
-
         try {
-            if (type === 'ALLOPATHIC') {
-                const result = await runAllopathicDiagnosis(profile, symptoms);
-                setDiagnosisData(result);
-            } else {
-                const result = await runHomeopathicDiagnosis(profile, symptoms);
-                setDiagnosisData(result);
-            }
+            const result = type === 'ALLOPATHIC' ? await runAllopathicDiagnosis(profile, symptoms) : await runHomeopathicDiagnosis(profile, symptoms);
+            setDiagnosisData(result);
         } catch (err) {
-            console.error(err);
-            setError("Falha ao gerar o diagnóstico. Tente novamente.");
+            setError("Falha ao gerar diagnóstico.");
             setModalOpen(false);
         } finally {
             setLoading(false);
         }
     };
-
     return (
-        <div className="w-full max-w-5xl mx-auto space-y-8 animate-fade-in pb-24">
-
-            <div className="text-center mb-10">
-                <span className="text-[10px] font-black text-brand-600 uppercase tracking-[0.4em] mb-3 block">Módulo de Hipótese Diagnóstica</span>
-                <h2 className="text-4xl font-display font-black text-slate-900 mb-4 tracking-tight">
-                    Investigação Clínica Assistida
-                </h2>
-                <p className="text-slate-500 max-w-2xl mx-auto text-lg">
-                    Preencha o quadro clínico completo para que a IA analise correlações entre sintomas, histórico e farmacologia.
-                </p>
+        <div className="w-full max-w-5xl mx-auto space-y-6 pb-24">
+            <div className="text-center mb-8">
+                <h2 className="text-4xl font-black text-slate-900 mb-2">Investigação Clínica Assistida</h2>
+                <p className="text-slate-500">Anamnese Completa com IA</p>
+                <div className="mt-6 max-w-2xl mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full h-3 overflow-hidden">
+                    <div className="bg-white h-full transition-all duration-500" style={{ width: `${100 - getCompletionPercentage()}%` }} />
+                </div>
+                <p className="text-xs font-bold text-slate-400 mt-2">{getCompletionPercentage()}% Preenchido</p>
             </div>
 
-            {error && (
-                <div className="bg-red-50 border border-red-100 rounded-[2rem] p-6 text-center max-w-xl mx-auto mb-8 shadow-sm">
-                    <p className="text-red-600 font-bold uppercase tracking-wide text-xs">{error}</p>
-                </div>
-            )}
+            {error && <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center text-red-600 font-bold">{error}</div>}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Perfil do Paciente */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-premium border border-slate-100 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                        <span className="text-9xl font-black">1</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center">
-                        <span className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mr-4 text-sm shadow-sm border border-blue-100">1</span>
-                        Perfil Biométrico
-                    </h3>
-                    <div className="space-y-6 relative z-10">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Nome do Paciente</label>
-                            <input
-                                type="text"
-                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all outline-none font-bold text-slate-700"
-                                value={profile.patientName}
-                                onChange={e => setProfile({ ...profile, patientName: e.target.value })}
-                                placeholder="Nome completo"
-                            />
+            <div className="space-y-4">
+                {/* Seção 1: Identificação */}
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                    <SectionHeader number="1" title="Identificação do Paciente" isOpen={expandedSections.identification} toggle={() => toggleSection('identification')} color="blue" />
+                    {expandedSections.identification && (
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Nome Completo</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.patientName} onChange={e => setProfile({ ...profile, patientName: e.target.value })} placeholder="Nome do paciente" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Idade *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.age} onChange={e => setProfile({ ...profile, age: e.target.value })} placeholder="Ex: 45" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Gênero *</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.gender} onChange={e => setProfile({ ...profile, gender: e.target.value })}><option value="">Selecione...</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option><option value="Outro">Outro</option></select></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Peso (kg) *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.weight} onChange={e => setProfile({ ...profile, weight: e.target.value })} placeholder="Ex: 70" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Altura (cm)</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.height} onChange={e => setProfile({ ...profile, height: e.target.value })} placeholder="Ex: 170" /></div>
+                            {calculateIMC() && <div className="md:col-span-2 bg-blue-50 p-4 rounded-xl"><p className="text-sm font-bold text-blue-900">IMC Calculado: <span className="text-2xl">{calculateIMC()}</span></p></div>}
                         </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Idade</label>
-                            <input
-                                type="text"
-                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all outline-none font-bold text-slate-700"
-                                value={profile.age}
-                                onChange={e => setProfile({ ...profile, age: e.target.value })}
-                                placeholder="Ex: 65 anos"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Gênero</label>
-                            <select
-                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all outline-none font-bold text-slate-700 appearance-none"
-                                value={profile.gender}
-                                onChange={e => setProfile({ ...profile, gender: e.target.value })}
-                            >
-                                <option value="">Selecione...</option>
-                                <option value="Masculino">Masculino</option>
-                                <option value="Feminino">Feminino</option>
-                                <option value="Outro">Outro</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Peso (kg)</label>
-                            <input
-                                type="text"
-                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all outline-none font-bold text-slate-700"
-                                value={profile.weight}
-                                onChange={e => setProfile({ ...profile, weight: e.target.value })}
-                                placeholder="Ex: 70kg"
-                            />
-                        </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* Contexto Clínico */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-premium border border-slate-100 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                        <span className="text-9xl font-black">2</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center">
-                        <span className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mr-4 text-sm shadow-sm border border-purple-100">2</span>
-                        Anamnese & Histórico
-                    </h3>
-                    <div className="space-y-6 relative z-10">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 pl-1">Principais Comorbidades</label>
-                            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar border border-slate-100 p-4 rounded-3xl bg-slate-50 text-left">
-                                {commonDiseases.map(disease => (
-                                    <label key={disease} className="flex items-start space-x-3 cursor-pointer p-3 rounded-2xl hover:bg-white hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
+                {/* Seção 2: Sinais Vitais */}
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                    <SectionHeader number="2" title="Sinais Vitais" isOpen={expandedSections.vitals} toggle={() => toggleSection('vitals')} color="red" />
+                    {expandedSections.vitals && (
+                        <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">PA (mmHg)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.bloodPressure} onChange={e => setProfile({ ...profile, bloodPressure: e.target.value })} placeholder="120/80" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">FC (bpm)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.heartRate} onChange={e => setProfile({ ...profile, heartRate: e.target.value })} placeholder="72" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Temp (°C)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.temperature} onChange={e => setProfile({ ...profile, temperature: e.target.value })} placeholder="36.5" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">SpO2 (%)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.oxygenSaturation} onChange={e => setProfile({ ...profile, oxygenSaturation: e.target.value })} placeholder="98" /></div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Seção 3: Histórico Médico */}
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                    <SectionHeader number="3" title="Histórico Médico" isOpen={expandedSections.history} toggle={() => toggleSection('history')} color="purple" />
+                    {expandedSections.history && (
+                        <div className="p-6 space-y-4">
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Alergias (Medicamentosas/Alimentares)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.allergies} onChange={e => setProfile({ ...profile, allergies: e.target.value })} placeholder="Ex: Penicilina, camarão" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Comorbidades</label>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-4 border rounded-xl max-h-60 overflow-y-auto">
+                                    {commonDiseases.map(d => (<label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 p-2 rounded"><input type="checkbox" checked={selectedDiseases.includes(d)} onChange={() => setSelectedDiseases(p => p.includes(d) ? p.filter(x => x !== d) : [...p, d])} className="rounded" /><span>{d}</span></label>))}
+                                </div>
+                                <div className="mt-4">
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Adicionar Outro CID-10</label>
+                                    <div className="relative">
                                         <input
-                                            type="checkbox"
-                                            checked={selectedDiseases.includes(disease)}
-                                            onChange={() => toggleDisease(disease)}
-                                            className="mt-1 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300 bg-white"
+                                            type="text"
+                                            className="w-full px-4 py-3 border border-purple-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                            value={cidSearchInput}
+                                            onChange={e => handleCidSearch(e.target.value)}
+                                            onFocus={() => { if (cidResults.length > 0) setShowCidDropdown(true); }}
+                                            onBlur={() => setTimeout(() => setShowCidDropdown(false), 200)}
+                                            placeholder="Digite para buscar CID-10..."
                                         />
-                                        <span className="text-sm font-medium text-slate-600">{disease}</span>
-                                    </label>
-                                ))}
-                            </div>
-                            <div className="mt-4">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Outras - Adicione manualmente</label>
-                                <div className="flex gap-2 mb-3">
-                                    <input
-                                        type="text"
-                                        className="flex-1 px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-purple-500 outline-none text-sm font-medium"
-                                        value={otherDiseaseInput}
-                                        onChange={e => setOtherDiseaseInput(e.target.value)}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter' && otherDiseaseInput.trim()) {
-                                                setOtherDiseasesList([...otherDiseasesList, otherDiseaseInput.trim()]);
-                                                setOtherDiseaseInput('');
-                                            }
-                                        }}
-                                        placeholder="Digite e pressione Enter..."
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            if (otherDiseaseInput.trim()) {
-                                                setOtherDiseasesList([...otherDiseasesList, otherDiseaseInput.trim()]);
-                                                setOtherDiseaseInput('');
-                                            }
-                                        }}
-                                        className="px-5 py-3 bg-purple-50 text-purple-700 rounded-2xl font-black hover:bg-purple-100 transition-colors shadow-sm"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-
-                                {/* Other Diseases List */}
-                                <div className="flex flex-wrap gap-2 min-h-[40px]">
-                                    {otherDiseasesList.map((disease, idx) => (
-                                        <span key={idx} className="flex items-center px-4 py-1.5 bg-white border border-purple-100 rounded-full text-xs font-bold text-slate-600 shadow-sm">
-                                            {disease}
-                                            <button
-                                                onClick={() => setOtherDiseasesList(otherDiseasesList.filter((_, i) => i !== idx))}
-                                                className="ml-2 text-slate-300 hover:text-red-500 text-lg leading-none"
-                                            >
-                                                &times;
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Medicamentos Section */}
-            <div className="bg-white p-10 rounded-[2.5rem] shadow-premium border border-slate-100 relative overflow-hidden mb-8">
-                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-                    <span className="text-9xl font-black text-emerald-900">3</span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center justify-between relative z-10">
-                    <div className="flex items-center">
-                        <span className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mr-4 text-sm shadow-sm border border-emerald-100">3</span>
-                        Medicamentos em Uso
-                    </div>
-                    <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl uppercase tracking-widest">
-                        {profile.medications.length} Ativos
-                    </span>
-                </h3>
-
-                {/* Add Med Form */}
-                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 mb-8 relative z-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div className="md:col-span-2 relative">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Nome do Medicamento</label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-0 focus:border-emerald-500 outline-none font-bold text-slate-700"
-                                    value={currentMed.name}
-                                    onChange={e => handleMedSearch(e.target.value)}
-                                    onFocus={() => { if (medResults.length > 0) setShowMedDropdown(true); }}
-                                    onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
-                                    placeholder="Ex: Losartana"
-                                />
-                                {searchingMed && (
-                                    <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                                        <div className="animate-spin h-5 w-5 border-2 border-emerald-500 border-t-transparent rounded-full"></div>
+                                        {searchingCid && (
+                                            <div className="absolute right-3 top-3">
+                                                <div className="animate-spin h-5 w-5 border-2 border-purple-500 border-t-transparent rounded-full" />
+                                            </div>
+                                        )}
+                                        {showCidDropdown && (
+                                            <div className="absolute z-50 w-full mt-2 bg-white border border-purple-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                                                {cidResults.map((cid, i) => (
+                                                    <button
+                                                        key={i}
+                                                        type="button"
+                                                        onClick={() => handleSelectCid(cid)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-purple-50 border-b border-slate-100 last:border-0 transition-colors"
+                                                    >
+                                                        <span className="text-sm font-bold text-purple-700">{cid.codigo}</span>
+                                                        <span className="text-xs text-slate-600 block mt-1">{cid.descricao}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                    {otherDiseasesList.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-3">
+                                            {otherDiseasesList.map((disease, idx) => (
+                                                <span key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-800 rounded-full text-xs font-bold">
+                                                    {disease}
+                                                    <button
+                                                        onClick={() => setOtherDiseasesList(otherDiseasesList.filter((_, i) => i !== idx))}
+                                                        className="hover:text-red-600 transition-colors"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Cirurgias Prévias</label><textarea className="w-full px-4 py-3 border rounded-xl" rows={2} value={profile.previousSurgeries} onChange={e => setProfile({ ...profile, previousSurgeries: e.target.value })} placeholder="Ex: Apendicectomia (2015)" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">História Familiar</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.familyHistory} onChange={e => setProfile({ ...profile, familyHistory: e.target.value })} placeholder="Ex: Pai - HAS, Mãe - Diabetes" /></div>
+                        </div>
+                    )}
+                </div>
 
-                            {showMedDropdown && (
-                                <div className="absolute z-[100] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-premium max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {medResults.map((med, i) => (
-                                        <button
-                                            key={i}
-                                            type="button"
-                                            onClick={() => selectMed(med)}
-                                            className="w-full text-left px-6 py-4 hover:bg-emerald-50 border-b border-slate-50 last:border-0 flex flex-col gap-0.5 transition-colors"
-                                        >
-                                            <span className="text-sm text-slate-800 font-bold">{med.nome}</span>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{med.principioAtivo}</span>
-                                        </button>
-                                    ))}
+                {/* Seção 4: Hábitos de Vida */}
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                    <SectionHeader number="4" title="Hábitos de Vida" isOpen={expandedSections.habits} toggle={() => toggleSection('habits')} color="green" />
+                    {expandedSections.habits && (
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Tabagismo</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.smoking} onChange={e => setProfile({ ...profile, smoking: e.target.value as any })}><option value="Não">Não fumante</option><option value="Ex-fumante">Ex-fumante</option><option value="Fumante (< 10 cigarros/dia)">{'< 10 cig/dia'}</option><option value="Fumante (> 10 cigarros/dia)">{'> 10 cig/dia'}</option></select></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Etilismo</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.alcohol} onChange={e => setProfile({ ...profile, alcohol: e.target.value as any })}><option value="Não consome">Não consome</option><option value="Social">Social</option><option value="Frequente">Frequente</option><option value="Diário">Diário</option></select></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Atividade Física</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.physicalActivity} onChange={e => setProfile({ ...profile, physicalActivity: e.target.value as any })}><option value="Sedentário">Sedentário</option><option value="Leve (1-2x/sem)">Leve (1-2x/sem)</option><option value="Moderado (3-4x/sem)">Moderado (3-4x/sem)</option><option value="Intenso (5+x/sem)">Intenso (5+x/sem)</option></select></div>
+                            {profile.gender === 'Feminino' && (
+                                <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-pink-50 rounded-xl">
+                                    <label className="flex items-center gap-2"><input type="checkbox" checked={profile.isPregnant} onChange={e => setProfile({ ...profile, isPregnant: e.target.checked })} /><span className="text-sm font-bold">Gestante</span></label>
+                                    {profile.isPregnant && <div><label className="block text-xs font-bold mb-2">IG (semanas)</label><input type="number" className="w-full px-3 py-2 border rounded-lg" value={profile.gestationalWeeks} onChange={e => setProfile({ ...profile, gestationalWeeks: e.target.value })} /></div>}
+                                    <label className="flex items-center gap-2"><input type="checkbox" checked={profile.menopause} onChange={e => setProfile({ ...profile, menopause: e.target.checked })} /><span className="text-sm font-bold">Menopausa</span></label>
+                                    {!profile.menopause && <div><label className="block text-xs font-bold mb-2">DUM</label><input type="date" className="w-full px-3 py-2 border rounded-lg" value={profile.lastMenstrualPeriod} onChange={e => setProfile({ ...profile, lastMenstrualPeriod: e.target.value })} /></div>}
                                 </div>
                             )}
                         </div>
-
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Dosagem</label>
-                            <input
-                                type="text"
-                                className="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-0 focus:border-emerald-500 outline-none font-medium"
-                                value={currentMed.dosage}
-                                onChange={e => setCurrentMed({ ...currentMed, dosage: e.target.value })}
-                                placeholder="Ex: 50mg"
-                            />
-                        </div>
-                        {/* Other fields simplified for layout but functionality remains */}
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-1">Uso</label>
-                            <div className="flex bg-white rounded-2xl border border-slate-200 p-1">
-                                <button
-                                    onClick={() => setCurrentMed({ ...currentMed, usageType: 'CONTINUOUS' })}
-                                    className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${currentMed.usageType === 'CONTINUOUS' ? 'bg-emerald-100 text-emerald-700' : 'text-slate-400 hover:text-slate-600'}`}
-                                >Contínuo</button>
-                                <button
-                                    onClick={() => setCurrentMed({ ...currentMed, usageType: 'SOS' })}
-                                    className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${currentMed.usageType === 'SOS' ? 'bg-slate-200 text-slate-700' : 'text-slate-400 hover:text-slate-600'}`}
-                                >SOS</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-3 mt-4">
-                        {editingIndex !== null && (
-                            <button
-                                onClick={handleCancelEdit}
-                                className="px-8 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors text-xs uppercase tracking-widest"
-                            >
-                                Cancelar
-                            </button>
-                        )}
-                        <button
-                            onClick={handleAddMed}
-                            disabled={!currentMed.name}
-                            className={`px-8 py-4 text-white rounded-2xl font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs uppercase tracking-widest shadow-lg
-                                    ${editingIndex !== null ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700 hover:shadow-emerald-500/30'}`}
-                        >
-                            {editingIndex !== null ? 'Atualizar' : 'Adicionar'}
-                        </button>
-                    </div>
+                    )}
                 </div>
-
-                {/* Med List */}
-                <div className="space-y-4 relative z-10">
-                    {profile.medications.length === 0 ? (
-                        <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-3xl">
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Nenhum medicamento listado</p>
-                        </div>
-                    ) : (
-                        profile.medications.map((med, idx) => (
-                            <div key={idx} className="flex flex-col sm:flex-row items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl hover:shadow-lg hover:border-emerald-100 transition-all group">
-                                <div className="flex items-center space-x-5 w-full">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 font-black group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors shrink-0 text-lg">
-                                        {idx + 1}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className="font-bold text-slate-800 text-lg">{med.name} <span className="font-medium text-slate-400 text-sm ml-1">{med.dosage}</span></h4>
-                                        <div className="flex gap-2 mt-1">
-                                            <span className="text-[10px] font-bold bg-slate-50 text-slate-500 px-2 py-1 rounded-lg uppercase tracking-wider">{med.usageType === 'CONTINUOUS' ? 'Uso Contínuo' : 'SOS'}</span>
+                {/* Seção 5: Medicamentos */}
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                    <SectionHeader number="5" title={`Medicamentos (${profile.medications.length})`} isOpen={expandedSections.meds} toggle={() => toggleSection('meds')} color="emerald" />
+                    {expandedSections.meds && (
+                        <div className="p-6 space-y-4">
+                            <div className="bg-slate-50 p-4 rounded-2xl space-y-3" data-section="meds-form">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 border rounded-xl"
+                                        value={currentMed.name}
+                                        onChange={e => handleMedSearch(e.target.value)}
+                                        onFocus={() => { if (medResults.length > 0) setShowMedDropdown(true); }}
+                                        onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
+                                        placeholder="Nome do medicamento (digite para buscar)"
+                                    />
+                                    {searchingMed && (
+                                        <div className="absolute right-3 top-3">
+                                            <div className="animate-spin h-5 w-5 border-2 border-emerald-500 border-t-transparent rounded-full" />
                                         </div>
+                                    )}
+                                    {showMedDropdown && medResults.length > 0 && (
+                                        <div className="absolute z-50 w-full mt-2 bg-white border border-emerald-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                                            {medResults.map((med, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCurrentMed({ ...currentMed, name: med.nome });
+                                                        setShowMedDropdown(false);
+                                                        setMedResults([]);
+                                                    }}
+                                                    className="w-full text-left px-4 py-3 hover:bg-emerald-50 border-b border-slate-100 last:border-0 transition-colors"
+                                                >
+                                                    <span className="text-sm font-bold text-emerald-700">{med.nome}</span>
+                                                    <span className="text-xs text-slate-600 block mt-1">{med.principioAtivo}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <input type="text" className="px-4 py-3 border rounded-xl" value={currentMed.dosage} onChange={e => setCurrentMed({ ...currentMed, dosage: e.target.value })} placeholder="Dosagem (ex: 50mg)" />
+                                    <select
+                                        className="px-4 py-3 border rounded-xl bg-white"
+                                        value={currentMed.frequency}
+                                        onChange={e => setCurrentMed({ ...currentMed, frequency: e.target.value })}
+                                    >
+                                        <option value="">Periodicidade...</option>
+                                        <option value="1x por dia">1x por dia</option>
+                                        <option value="2x por dia">2x por dia</option>
+                                        <option value="3x por dia">3x por dia</option>
+                                        <option value="4x por dia">4x por dia</option>
+                                        <option value="1x por semana">1x por semana</option>
+                                        <option value="2x por semana">2x por semana</option>
+                                        <option value="Conforme necessário">Conforme necessário</option>
+                                    </select>
+                                    <div className="flex gap-2"><button onClick={() => setCurrentMed({ ...currentMed, usageType: 'CONTINUOUS' })} className={`flex-1 py-3 rounded-xl text-xs font-bold ${currentMed.usageType === 'CONTINUOUS' ? 'bg-emerald-500 text-white' : 'bg-white border'}`}>Contínuo</button><button onClick={() => setCurrentMed({ ...currentMed, usageType: 'SOS' })} className={`flex-1 py-3 rounded-xl text-xs font-bold ${currentMed.usageType === 'SOS' ? 'bg-orange-500 text-white' : 'bg-white border'}`}>SOS</button></div>
+                                </div>
+                                <div className="relative">
+                                    <label className="block text-xs font-bold text-slate-500 mb-2">Motivo / Indicação Clínica (CID-10)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-3 border border-emerald-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                                        value={currentMed.reason || ''}
+                                        onChange={e => handleCidReasonSearch(e.target.value)}
+                                        onFocus={() => { if (cidReasonResults.length > 0) setShowCidReasonDropdown(true); }}
+                                        onBlur={() => setTimeout(() => setShowCidReasonDropdown(false), 200)}
+                                        placeholder="Digite para buscar CID-10 (ex: Hipertensão)..."
+                                    />
+                                    {searchingCidReason && (
+                                        <div className="absolute right-3 top-10">
+                                            <div className="animate-spin h-5 w-5 border-2 border-emerald-500 border-t-transparent rounded-full" />
+                                        </div>
+                                    )}
+                                    {showCidReasonDropdown && cidReasonResults.length > 0 && (
+                                        <div className="absolute z-50 w-full mt-2 bg-white border border-emerald-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                                            {cidReasonResults.map((cid, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={() => handleSelectCidReason(cid)}
+                                                    className="w-full text-left px-4 py-3 hover:bg-emerald-50 border-b border-slate-100 last:border-0 transition-colors"
+                                                >
+                                                    <span className="text-sm font-bold text-emerald-700">{cid.codigo}</span>
+                                                    <span className="text-xs text-slate-600 block mt-1">{cid.descricao}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <button onClick={handleAddMed} disabled={!currentMed.name} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold disabled:opacity-50">{editingIndex !== null ? 'Atualizar' : 'Adicionar'}</button>
+                            </div>
+                            <div className="space-y-2">{profile.medications.map((med, i) => (
+                                <div key={i} className="flex items-center justify-between p-4 border rounded-xl hover:bg-slate-50">
+                                    <div className="flex-1">
+                                        <p className="font-bold">{med.name}</p>
+                                        <p className="text-xs text-slate-500">
+                                            {med.dosage}
+                                            {med.frequency && ` • ${med.frequency}`}
+                                            {' • '}
+                                            {med.usageType === 'CONTINUOUS' ? 'Contínuo' : 'SOS'}
+                                        </p>
+                                        {med.reason && (
+                                            <p className="text-xs text-emerald-700 mt-1">
+                                                <span className="font-semibold">Motivo:</span> {med.reason}
+                                            </p>
+                                        )}
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                        <button onClick={() => handleEditMed(idx)} className="p-3 text-slate-300 hover:text-blue-600 transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                                        <button onClick={() => handleRemoveMed(idx)} className="p-3 text-slate-300 hover:text-red-500 transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleEditMed(i)}
+                                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Editar medicamento"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={() => setProfile({ ...profile, medications: profile.medications.filter((_, idx) => idx !== i) })}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Excluir medicamento"
+                                        >
+                                            ×
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            ))}</div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Seção 6: Sintomas */}
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                    <SectionHeader number="6" title="Sintomas e Queixa Principal *" isOpen={expandedSections.symptoms} toggle={() => toggleSection('symptoms')} color="orange" />
+                    {expandedSections.symptoms && (
+                        <div className="p-6"><textarea value={symptoms} onChange={e => setSymptoms(e.target.value)} className="w-full h-40 px-4 py-3 border rounded-xl" placeholder="Descreva detalhadamente os sintomas, tempo de evolução, intensidade..." /></div>
                     )}
                 </div>
             </div>
 
-            {/* Nova Seção: Sintomas (Rich Text) */}
-            <div className="bg-white p-10 rounded-[2.5rem] shadow-premium border border-slate-100 relative overflow-hidden group mb-8">
-                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
-                    <span className="text-9xl font-black text-brand-900">4</span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center relative z-10">
-                    <span className="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mr-4 text-sm shadow-sm border border-teal-100">4</span>
-                    Sintomatologia & Queixa Principal
-                </h3>
-                <div className="relative z-10">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 pl-1">
-                        Relato Clínico Detalhado (Obrigatório)
-                    </label>
-                    <div className="relative">
-                        <textarea
-                            value={symptoms}
-                            onChange={(e) => setSymptoms(e.target.value)}
-                            className="w-full h-48 px-8 py-6 bg-slate-50 border border-slate-200 rounded-3xl focus:ring-0 focus:border-teal-500 focus:bg-white transition-all text-lg text-slate-700 font-medium placeholder:text-slate-300 outline-none leading-relaxed resize-none shadow-inner"
-                            placeholder="Descreva detalhadamente o que o paciente está sentindo. Inclua tempo de evolução, intensidade, fatores de melhora/piora e quaisquer sinais observados..."
-                        />
-                        <div className="absolute bottom-4 right-6 text-[10px] font-black uppercase text-slate-300 tracking-widest pointer-events-none">
-                            Campo de Texto Rico
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-center pt-8">
+            {/* Botões de Ação */}
+            <div className="flex gap-4 pt-8">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center space-y-4">
-                        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-brand-600"></div>
-                        <p className="text-brand-600 font-black uppercase tracking-[0.2em] animate-pulse">Processando Diagnóstico...</p>
-                    </div>
+                    <div className="flex-1 flex flex-col items-center py-8"><div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full" /><p className="mt-4 font-bold text-slate-600">Processando...</p></div>
                 ) : (
-                    <div className="flex flex-col sm:flex-row gap-6 w-full max-w-4xl mx-auto">
-                        <button
-                            onClick={() => handleAnalyze('ALLOPATHIC')}
-                            className="flex-1 px-8 py-6 bg-medical-navy text-white rounded-3xl font-black text-sm uppercase tracking-[0.15em] hover:bg-slate-800 hover:shadow-2xl hover:shadow-slate-500/30 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 group relative overflow-hidden"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <span className="relative z-10">Diagnóstico de Especialistas Alopatas</span>
-                            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                        </button>
-
-                        <button
-                            onClick={() => handleAnalyze('HOMEOPATHIC')}
-                            className="flex-1 px-8 py-6 bg-teal-600 text-white rounded-3xl font-black text-sm uppercase tracking-[0.15em] hover:bg-teal-700 hover:shadow-2xl hover:shadow-teal-500/30 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 group relative overflow-hidden"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <span className="relative z-10">Diagnóstico de Especialistas Homeopatas</span>
-                            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
-                        </button>
-                    </div>
+                    <>
+                        <button onClick={() => handleAnalyze('ALLOPATHIC')} className="flex-1 py-6 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all hover:shadow-2xl">Diagnóstico Alopático</button>
+                        <button onClick={() => handleAnalyze('HOMEOPATHIC')} className="flex-1 py-6 bg-teal-600 text-white rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all hover:shadow-2xl">Diagnóstico Homeopático</button>
+                    </>
                 )}
             </div>
 
-            <DiagnosisModal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                data={diagnosisData}
-                loading={loading}
-                profile={profile}
-                symptoms={symptoms}
-            />
+            <DiagnosisModal isOpen={modalOpen} onClose={() => setModalOpen(false)} data={diagnosisData} loading={loading} profile={profile} symptoms={symptoms} />
         </div>
     );
 };

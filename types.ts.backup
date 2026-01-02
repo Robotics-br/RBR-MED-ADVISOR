@@ -45,43 +45,13 @@ export interface Medication {
 }
 
 export interface PatientProfile {
-  // Identificação
   patientName?: string;
   age: string;
   gender: string;
   weight: string;
-  height?: string;
-
-  // Sinais Vitais
-  bloodPressure?: string;
-  heartRate?: string;
-  temperature?: string;
-  oxygenSaturation?: string;
-
-  // Histórico Médico
   diseases: string;
-  allergies?: string; // Alergias medicamentosas e alimentares
-  previousSurgeries?: string; // Cirurgias prévias
-  familyHistory?: string; // História familiar de doenças
-
-  // Hábitos de Vida
-  smoking?: 'Não' | 'Ex-fumante' | 'Fumante (< 10 cigarros/dia)' | 'Fumante (> 10 cigarros/dia)';
-  alcohol?: 'Não consome' | 'Social' | 'Frequente' | 'Diário';
-  physicalActivity?: 'Sedentário' | 'Leve (1-2x/sem)' | 'Moderado (3-4x/sem)' | 'Intenso (5+x/sem)';
-
-  // Dados Gineco-Obstétricos (quando aplicável)
-  isPregnant?: boolean;
-  gestationalWeeks?: string;
-  menopause?: boolean;
-  lastMenstrualPeriod?: string;
-
-  // Substâncias e Medicações
   otherSubstances: string;
   medications: Medication[];
-
-  // Dados Complementares
-  recentExams?: string; // Últimos exames laboratoriais
-  vaccinationStatus?: string; // Status vacinal relevante
 }
 
 export interface InteractionResult {
