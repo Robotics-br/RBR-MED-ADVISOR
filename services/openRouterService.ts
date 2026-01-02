@@ -1,5 +1,5 @@
 
-import { ResearchResponse, StudyResult, StudyExplanation, PatientProfile, DrugInteractionAnalysis, Cid10Result, MedicationSuggestion } from "../types";
+import { ResearchResponse, StudyResult, StudyExplanation, PatientProfile, DrugInteractionAnalysis, Cid10Result, MedicationSuggestion, DiagnosisResult } from "../types";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 const SITE_URL = "http://localhost:3000"; // Site URL for OpenRouter rankings
@@ -540,5 +540,216 @@ export const searchMedication = async (query: string): Promise<MedicationSuggest
     } catch (e) {
         console.error("Erro na busca de medicamentos", e);
         return [];
+    }
+};
+
+export const runAllopathicDiagnosis = async (profile: PatientProfile, symptoms: string): Promise<DiagnosisResult> => {
+    const prompt = `
+    ATUE COMO UMA JUNTA MÉDICA (CONSELHO CLÍNICO) COMPOSTA APENAS POR ESPECIALISTAS ALOPATAS, CADA UM COM MAIS DE 20 ANOS DE EXPERIÊNCIA.
+    
+    Seu objetivo é analisar o caso clínico abaixo, debater internamente, verificar comorbidades e chegar a um consenso diagnóstico e terapêutico.
+
+    DADOS DO PACIENTE:
+    - Idade: ${profile.age}
+    - Gênero: ${profile.gender}
+    - Peso: ${profile.weight}
+    - Histórico (Comorbidades): ${profile.diseases}
+    - Medicamentos em Uso: ${profile.medications.map(m => `${m.name} (${m.dosage})`).join(', ')}
+    - Sintomas e Queixa Principal (Texto Rico): "${symptoms}"
+
+    ---
+    
+    REGRA DE OURO FILOLÓGICA (OBRIGATÓRIO):
+    Para CADA termo técnico médico ou jargão utilizado no relatório final (diagnóstico, exames, mecanismos), você DEVE obrigatoriamente colocar entre parênteses a explicação para leigos.
+    Exemplo: "Sugerimos investigar Hipotireoidismo subclínico (tireoide funcionando devagar sem sintomas graves)..."
+
+    ---
+
+    REGRA DE IDENTIDADE (OBRIGATÓRIO):
+    NÃO invente nomes próprios para os especialistas. Refira-se a eles pelo cargo ou especialidade (Ex: "O Cardiologista", "Dr(a). Especialista em MTC").
+    
+    IMPORTANTE: Caso pertinente, inclua a visão de um Especialista em Medicina Tradicional Chinesa (MTC) para complementar a visão alopática.
+
+    ---
+
+    PROTOCOLO DE ANÁLISE (SIMULAÇÃO DE CADENA DE PENSAMENTO):
+    
+    1. CONVOCAÇÃO DA JUNTA MÉDICA:
+       Baseado nas comorbidades, convoque especialistas seniores (Cardio, Endo, Geri, etc).
+       Se houver benefícios claros, convoque também um Especialista em MTC para visão integrativa.
+       
+    2. DEBATE INTERNO (Chain of Thought):
+       Simule o debate, cruze sintomas e critique medicamentos.
+       
+    3. ANÁLISE DE INTERAÇÕES MEDICAMENTOSAS DE ALTO RISCO:
+       Aponte APENAS interações graves (risco de vida).
+
+    4. CONSENSO DIAGNÓSTICO:
+       Hipótese principal unificada.
+
+    ---
+
+    SAÍDA ESPERADA (JSON ESTRUTURADO):
+    Gere um JSON (sem markdown) com os seguintes campos em PORTUGUÊS:
+
+    {
+       "boardMembers": [
+          { "name": "", "role": "Cardiologista Sênior", "experience": "25 anos em Hipertensão", "specialty": "Cardiologia" },
+          { "name": "", "role": "Dr(a). Especialista em MTC", "experience": "20 anos em Acupuntura", "specialty": "Medicina Chinesa" }
+       ],
+       "comorbiditiesAnalysis": "Resumo validação comorbidades (Markdown permitido).",
+       "discussionSummary": "Resumo executivo do debate. (Markdown permitido)",
+       "highRiskInteractions": [
+          "Interação grave X com Y" 
+       ],
+       "finalConsensus": "Texto final diagnóstico. (Markdown permitido)",
+       "recommendations": "Plano de ação. (Markdown permitido)",
+       "disclaimer": "Texto padrão (IA auxiliar).",
+       "references": [
+          { "title": "Diretriz SBC Hipertensão 2024", "url": "https://..." }
+       ]
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "perplexity/sonar", // Modelo Reasoning High-End
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a Medical Board Simulation Engine. Return strictly valid JSON."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.2
+            })
+        });
+
+        const json = await response.json();
+        const cleanContent = (json.choices?.[0]?.message?.content || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanContent) as DiagnosisResult;
+    } catch (e) {
+        console.error("Erro no diagnóstico alopático", e);
+        throw new Error("Falha ao gerar diagnóstico da junta médica.");
+    }
+};
+
+export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms: string): Promise<DiagnosisResult> => {
+    const prompt = `
+    ATUE COMO UMA JUNTA MÉDICA INTEGRATIVA E HOLÍSTICA (CONSELHO CLÍNICO) COMPOSTA APENAS POR ESPECIALISTAS COM MAIS DE 20 ANOS DE EXPERIÊNCIA NAS SEGUINTES ÁREAS:
+    1. Medicina Tradicional Chinesa (MTC)
+    2. Homeopatia Clássica (Unicista ou Pluralista)
+    3. Medicina Holística / Integrativa
+    4. Acupuntura Médica (se aplicável ao caso)
+
+    Seu objetivo é analisar o caso clínico abaixo sob a ótica da vitalidade, equilíbrio energético, terrenos biológicos e miasmas, além da visão clínica padrão.
+
+    DADOS DO PACIENTE:
+    - Idade: ${profile.age}
+    - Gênero: ${profile.gender}
+    - Peso: ${profile.weight}
+    - Histórico (Comorbidades): ${profile.diseases}
+    - Medicamentos em Uso: ${profile.medications.map(m => `${m.name} (${m.dosage})`).join(', ')}
+    - Sintomas e Queixa Principal (Texto Rico): "${symptoms}"
+
+    ---
+    
+    REGRA DE OURO FILOLÓGICA (OBRIGATÓRIO):
+    Para CADA termo técnico (Seja médico padrão ou de medicinas alternativas como "Qi", "Miasma", "Meridianos"), você DEVE obrigatoriamente colocar entre parênteses a explicação clara para leigos.
+    Exemplo: "Observamos estagnação do Qi do Fígado (energia do fígado bloqueada causando irritação)..."
+
+    REGRA DE IDENTIDADE (OBRIGATÓRIO):
+    NÃO invente nomes próprios para os especialistas (como "Dr. Silva"). Refira-se a eles apenas pelo cargo ou especialidade.
+    Use o formato: "Dr(a). Especialista [Área]" ou "O Especialista em [Área]".
+    Exemplo: "Dr(a). Especialista Homeopata", "Dr(a). Especialista em MTC".
+
+    ---
+
+    PROTOCOLO DE ANÁLISE (SIMULAÇÃO DE CADENA DE PENSAMENTO):
+    
+    1. CONVOCAÇÃO DA JUNTA MÉDICA:
+       Identifique quais especialistas da área integrativa/homeopática devem participar.
+       
+    2. DEBATE INTERNO (Chain of Thought):
+       Simule o debate onde cada especialista analisa sua parte:
+       - O Homeopata busca o "Simillimum" e o miasma predominante.
+       - O Especialista em MTC avalia síndromes (Yin/Yang, Zang-Fu).
+       - O Holista integra corpo, mente e emoções.
+       Critique os medicamentos alopáticos atuais apenas se causarem supressão grave de sintomas importantes para a cura real.
+       
+    3. ANÁLISE DE INTERAÇÕES MEDICAMENTOSAS DE ALTO RISCO:
+       Mesmo focando em homeopatia, verifique se há interações perigosas nos remédios atuais do paciente.
+
+    4. CONSENSO DIAGNÓSTICO:
+       A junta deve chegar a uma hipótese principal unificada que traduza a patologia para o modelo vitalista/integrativo.
+
+    ---
+
+    SAÍDA ESPERADA (JSON ESTRUTURADO):
+    Gere um JSON (sem markdown) com os seguintes campos em PORTUGUÊS:
+
+    {
+       "boardMembers": [
+          { "name": "", "role": "Dr(a). Especialista Homeopata", "experience": "25 anos em Miasmática", "specialty": "Homeopatia" },
+          { "name": "", "role": "Dr(a). Especialista em MTC", "experience": "30 anos em Acupuntura Sistêmica", "specialty": "Medicina Tradicional Chinesa" }
+       ],
+       "comorbiditiesAnalysis": "Análise das doenças pré-existentes sob a visão holística (ex: Hipertensão como excesso de Yang ou Sycosis). (Markdown permitido)",
+       "discussionSummary": "Resumo executivo do debate entre os médicos integrativos. Como a visão da MTC complementou a Homeopatia? (Markdown permitido)",
+       "highRiskInteractions": [
+          "Alertas de segurança sobre os medicamentos alopáticos atuais (se houver)" 
+       ],
+       "finalConsensus": "Texto final do diagnóstico integrativo. Use Markdown. Lembre-se da REGRA DE OURO (termos leigos em parênteses).",
+       "recommendations": "Plano terapêutico sugerido: remédios homeopáticos, fitoterapia, dieta, acupuntura. (Markdown permitido)",
+       "disclaimer": "Texto padrão isentando responsabilidade legal (IA auxiliar - Consulte sempre seu médico).",
+       "references": [
+          { "title": "Diretriz SBC Hipertensão 2024", "url": "https://..." }
+       ]
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "perplexity/sonar", // Modelo Reasoning High-End
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a Holistic & Homeopathic Medical Board Simulation Engine. Return strictly valid JSON."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.3 // Um pouco mais criativo para relacionar conceitos holísticos
+            })
+        });
+
+        const json = await response.json();
+        const cleanContent = (json.choices?.[0]?.message?.content || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanContent) as DiagnosisResult;
+    } catch (e) {
+        console.error("Erro no diagnóstico homeopático", e);
+        throw new Error("Falha ao gerar diagnóstico da junta médica integrativa.");
     }
 };

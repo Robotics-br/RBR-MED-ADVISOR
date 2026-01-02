@@ -10,9 +10,10 @@ import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy, searchCid1
 import { ResearchResponse, StudyResult, StudyExplanation, Cid10Result, MedicationSuggestion } from './types';
 
 import { DrugInteraction } from './components/DrugInteraction';
+import { AiDiagnosis } from './components/AiDiagnosis';
 import { Login } from './components/Login';
 
-type SearchMode = 'discover' | 'verify' | 'interactions';
+type SearchMode = 'discover' | 'verify' | 'interactions' | 'diagnosis';
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -155,6 +156,7 @@ const App: React.FC = () => {
     if (!query.trim()) return;
     if (activeMode === 'verify' && !medicationQuery.trim()) return;
     if (activeMode === 'interactions') return;
+    if (activeMode === 'diagnosis') return;
 
     setLoading(true);
     setError(null);
@@ -215,53 +217,60 @@ const App: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {[
           {
             id: 'discover',
             title: 'Protocolos',
-            subtitle: 'Tratamentos & Terapias',
-            desc: 'Investigação de novas drogas e avanços terapêuticos globais.',
+            subtitle: 'Tratamentos',
+            desc: 'Investigação de novas drogas e avanços terapêuticos.',
             icon: '🔬',
             color: 'teal'
           },
           {
             id: 'verify',
             title: 'Validação',
-            subtitle: 'Eficácia Clínica',
-            desc: 'Escaneamento de evidências científicas para fármacos específicos.',
+            subtitle: 'Eficácia',
+            desc: 'Escaneamento de evidências científicas e validação.',
             icon: '⚖️',
             color: 'brand'
           },
           {
             id: 'interactions',
             title: 'Segurança',
-            subtitle: 'Risco de Interações',
-            desc: 'Análise de compatibilidade e segurança em regimes polifarmácia.',
+            subtitle: 'Interações',
+            desc: 'Análise de compatibilidade em regimes polifarmácia.',
             icon: '🛡️',
             color: 'slate'
+          },
+          {
+            id: 'diagnosis',
+            title: 'Clínica IA',
+            subtitle: 'Diagnóstico',
+            desc: 'Análise assistida de sintomas e hipóteses diagnósticas.',
+            icon: '🧠',
+            color: 'violet'
           }
         ].map((item) => (
           <button
             key={item.id}
             onClick={() => { setActiveMode(item.id as SearchMode); setShowMenu(false); }}
-            className="card-hover group bg-white border border-slate-100 rounded-[3rem] p-10 flex flex-col items-center text-center relative overflow-hidden shadow-premium"
+            className="card-hover group bg-white border border-slate-100 rounded-[2.5rem] p-8 flex flex-col items-center text-center relative overflow-hidden shadow-premium h-full"
           >
-            <div className="w-20 h-20 rounded-[2rem] flex items-center justify-center text-4xl mb-8 bg-slate-50 group-hover:bg-brand-50 group-hover:rotate-6 transition-all duration-500">
+            <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-3xl mb-6 bg-slate-50 group-hover:bg-${item.color}-50 group-hover:rotate-6 transition-all duration-500 scale-100`}>
               {item.icon}
             </div>
 
-            <div className="space-y-2 mb-8">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 group-hover:text-brand-500 transition-colors">{item.title}</span>
-              <h3 className="text-2xl font-bold text-medical-navy">{item.subtitle}</h3>
+            <div className="space-y-1 mb-6 flex-grow">
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 group-hover:text-brand-500 transition-colors block mb-2">{item.title}</span>
+              <h3 className="text-xl font-bold text-medical-navy">{item.subtitle}</h3>
+              <p className="text-slate-500 text-xs leading-relaxed mt-4 opacity-80">
+                {item.desc}
+              </p>
             </div>
 
-            <p className="text-slate-500 text-sm leading-relaxed mb-10 h-12">
-              {item.desc}
-            </p>
-
-            <div className="w-full py-5 bg-medical-navy text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] group-hover:bg-brand-600 shadow-lg group-hover:shadow-brand-500/20 transition-all duration-300">
-              Acessar Módulo
+            <div className="w-full py-4 bg-medical-navy text-white rounded-xl text-[9px] font-black uppercase tracking-[0.3em] group-hover:bg-brand-600 shadow-lg group-hover:shadow-brand-500/20 transition-all duration-300">
+              Acessar
             </div>
           </button>
         ))}
@@ -284,6 +293,7 @@ const App: React.FC = () => {
                   {activeMode === 'discover' && <span className="text-teal-600">Tratamentos & Terapias</span>}
                   {activeMode === 'verify' && <span className="text-brand-500">Validação de Eficácia</span>}
                   {activeMode === 'interactions' && <span className="text-slate-700">Segurança & Interações</span>}
+                  {activeMode === 'diagnosis' && <span className="text-violet-600">Assistente Diagnóstico</span>}
                 </h2>
                 <div className="flex justify-center gap-3">
                   <div className="h-1.5 w-12 bg-slate-200 rounded-full"></div>
@@ -294,17 +304,17 @@ const App: React.FC = () => {
 
               {/* Advanced Tabs */}
               <div className="flex justify-center mb-20 overflow-hidden">
-                <div className="bg-slate-100/50 p-2 rounded-[1.5rem] flex border border-slate-200/50 backdrop-blur-sm">
-                  {['discover', 'verify', 'interactions'].map((mode) => (
+                <div className="bg-slate-100/50 p-2 rounded-[1.5rem] flex flex-wrap justify-center border border-slate-200/50 backdrop-blur-sm gap-2">
+                  {['discover', 'verify', 'interactions', 'diagnosis'].map((mode) => (
                     <button
                       key={mode}
                       onClick={() => { setActiveMode(mode as SearchMode); setData(null); setError(null); setQuery(''); setMedicationQuery(''); }}
-                      className={`px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeMode === mode
+                      className={`px-8 sm:px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeMode === mode
                         ? 'bg-white text-medical-navy shadow-premium'
                         : 'text-slate-400 hover:text-slate-600'
                         }`}
                     >
-                      {mode === 'discover' ? 'Tratamentos' : mode === 'verify' ? 'Eficácia' : 'Segurança'}
+                      {mode === 'discover' ? 'Tratamentos' : mode === 'verify' ? 'Eficácia' : mode === 'interactions' ? 'Segurança' : 'Diagnóstico'}
                     </button>
                   ))}
                 </div>
@@ -312,6 +322,8 @@ const App: React.FC = () => {
 
               {activeMode === 'interactions' ? (
                 <DrugInteraction />
+              ) : activeMode === 'diagnosis' ? (
+                <AiDiagnosis />
               ) : (
                 <div className="max-w-2xl mx-auto relative z-20">
                   <form onSubmit={handleSearch} className="bg-white border border-slate-100 p-12 rounded-[3.5rem] shadow-premium space-y-10 text-left">

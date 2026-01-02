@@ -95,3 +95,20 @@ export interface MedicationSuggestion {
   principioAtivo: string;
 }
 
+export interface MedicalBoardMember {
+  name: string;
+  specialty: string;
+  experience: string;
+  role: string;
+}
+
+export interface DiagnosisResult {
+  boardMembers: MedicalBoardMember[];
+  discussionSummary: string; // Internal debate summary
+  highRiskInteractions: string[]; // Only high risk
+  comorbiditiesAnalysis: string; // Logic applied to comorbidities
+  finalConsensus: string; // The diagnosis
+  recommendations: string;
+  disclaimer: string;
+  references: { title: string; url: string }[];
+}
