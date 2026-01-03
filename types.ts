@@ -135,6 +135,7 @@ export interface MedicalBoardMember {
 
 export interface DiagnosisResult {
   boardMembers: MedicalBoardMember[];
+  conversation?: { speaker: string; message: string; round: number }[]; // Debate entre especialistas
   discussionSummary: string; // Internal debate summary
   highRiskInteractions: string[]; // Only high risk
   comorbiditiesAnalysis: string; // Logic applied to comorbidities

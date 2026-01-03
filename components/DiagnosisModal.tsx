@@ -15,6 +15,7 @@ interface DiagnosisModalProps {
 export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose, data, loading, profile, symptoms }) => {
     const [showSources, setShowSources] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [showConversation, setShowConversation] = useState(false);
 
     if (!isOpen) return null;
 
@@ -120,6 +121,69 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                     ))}
                                 </div>
                             </section>
+
+                            {/* 1.5. Debate Between Specialists */}
+                            {data.conversation && data.conversation.length > 0 && (
+                                <section className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-[1.5rem] p-6 relative overflow-hidden">
+                                    <div className="absolute -right-10 -bottom-10 opacity-5">
+                                        <svg className="w-64 h-64 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" /></svg>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setShowConversation(!showConversation)}
+                                        className="w-full flex items-center justify-between group relative z-10"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                            </div>
+                                            <div className="text-left">
+                                                <h3 className="font-bold text-indigo-900 text-sm">Debate Entre Especialistas</h3>
+                                                <p className="text-xs text-indigo-600">{data.conversation.length} mensagens • {Math.max(...data.conversation.map(c => c.round))} rounds</p>
+                                            </div>
+                                        </div>
+                                        <svg className={`w-6 h-6 text-indigo-600 transition-transform ${showConversation ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                    </button>
+
+                                    {showConversation && (
+                                        <div className="mt-6 space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+                                            {Array.from(new Set(data.conversation.map(c => c.round))).sort().map((roundNum) => (
+                                                <div key={roundNum} className="space-y-3">
+                                                    <div className="flex items-center gap-2 sticky top-0 bg-indigo-100/90 backdrop-blur-sm px-3 py-2 rounded-lg z-20">
+                                                        <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">{roundNum}</span>
+                                                        <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                                                            Round {roundNum}
+                                                        </span>
+                                                    </div>
+                                                    {data.conversation!.filter(c => c.round === roundNum).map((msg, idx) => {
+                                                        // Formatar mensagem com quebras de linha após pontos finais
+                                                        const formattedMessage = msg.message
+                                                            .split('. ')
+                                                            .map(sentence => sentence.trim())
+                                                            .filter(s => s.length > 0)
+                                                            .map(s => s.endsWith('.') ? s : s + '.')
+                                                            .join('.\n\n');
+
+                                                        return (
+                                                            <div key={idx} className="bg-white rounded-xl p-4 border border-indigo-100 shadow-sm">
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                                                                        <span className="text-lg">👨‍⚕️</span>
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0 text-left">
+                                                                        <p className="font-bold text-sm text-indigo-900 mb-2">{msg.speaker}</p>
+                                                                        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line text-left">{formattedMessage}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            )}
 
                             {/* 2. High Risk Alerts */}
                             {data.highRiskInteractions && data.highRiskInteractions.length > 0 && (
