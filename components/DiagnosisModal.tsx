@@ -243,6 +243,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                     <svg className="w-64 h-64 text-emerald-900" fill="currentColor" viewBox="0 0 24 24"><path d="M9 3v2.25C6.54 5.67 4.67 7.54 4.25 10h2.52c.39-1.07 1.41-1.84 2.61-1.84s2.22.77 2.61 1.84h2.52c-.42-2.46-2.29-4.33-4.75-4.75V3H9z" /></svg>
                                 </div>
 
+
                                 <div className="relative z-10 flex flex-col gap-6">
                                     <h3 className="text-xs font-black text-emerald-700 uppercase tracking-[0.2em] flex items-center gap-3">
                                         <span className="w-8 h-8 rounded-lg bg-white/60 backdrop-blur-md flex items-center justify-center border border-emerald-200 shadow-sm">
@@ -251,8 +252,82 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                         Consenso Diagnóstico Final
                                     </h3>
 
-                                    <div className="prose prose-lg max-w-none leading-relaxed text-slate-700 font-medium text-justify">
-                                        <div dangerouslySetInnerHTML={{ __html: data.finalConsensus.replace(/\. /g, '.<br/><br/>').replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-emerald-900 font-black">$1</strong>') }} />
+                                    <div className="text-slate-700 text-left space-y-4">
+                                        {(() => {
+                                            const content = data.finalConsensus;
+                                            const lines = content.split('\n').filter(l => l.trim());
+                                            const elements: React.ReactNode[] = [];
+
+                                            lines.forEach((line, idx) => {
+                                                const trimmed = line.trim();
+
+                                                // Lista numerada com diagnóstico
+                                                if (/^\d+\.\s+/.test(trimmed)) {
+                                                    const match = trimmed.match(/^(\d+)\.\s+(.+)$/);
+                                                    if (match) {
+                                                        const [, num, text] = match;
+                                                        // Adicionar quebras de linha após pontos finais
+                                                        const withBreaks = text
+                                                            .split('. ')
+                                                            .map(s => s.trim())
+                                                            .filter(s => s.length > 0)
+                                                            .map(s => s.endsWith('.') ? s : s + '.')
+                                                            .join('.<br/><br/>');
+                                                        // Processar negrito e parênteses
+                                                        const processedText = withBreaks
+                                                            .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-emerald-900">$1</strong>')
+                                                            .replace(/\(([^)]+)\)/g, '<span class="text-slate-600 text-sm">($1)</span>');
+
+                                                        elements.push(
+                                                            <div key={idx} className="flex items-start gap-3 py-2">
+                                                                <span className="flex-shrink-0 w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-sm flex items-center justify-center">
+                                                                    {num}
+                                                                </span>
+                                                                <p
+                                                                    className="flex-1 text-sm leading-relaxed pt-0.5"
+                                                                    dangerouslySetInnerHTML={{ __html: processedText }}
+                                                                />
+                                                            </div>
+                                                        );
+                                                    }
+                                                }
+                                                // Título/seção (ex: "Gravidade:", "Diagnósticos principais:")
+                                                else if (trimmed.endsWith(':') || trimmed.includes('**')) {
+                                                    const processedText = trimmed
+                                                        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-emerald-900">$1</strong>');
+                                                    elements.push(
+                                                        <h4
+                                                            key={idx}
+                                                            className="font-bold text-emerald-900 text-sm mt-4 mb-2"
+                                                            dangerouslySetInnerHTML={{ __html: processedText }}
+                                                        />
+                                                    );
+                                                }
+                                                // Parágrafo normal
+                                                else if (trimmed.length > 0) {
+                                                    // Adicionar quebras de linha após pontos finais
+                                                    const withBreaks = trimmed
+                                                        .split('. ')
+                                                        .map(s => s.trim())
+                                                        .filter(s => s.length > 0)
+                                                        .map(s => s.endsWith('.') ? s : s + '.')
+                                                        .join('.<br/><br/>');
+                                                    const processedText = withBreaks
+                                                        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-emerald-900">$1</strong>')
+                                                        .replace(/\(([^)]+)\)/g, '<span class="text-slate-600 text-sm">($1)</span>');
+
+                                                    elements.push(
+                                                        <p
+                                                            key={idx}
+                                                            className="text-sm leading-relaxed text-slate-700"
+                                                            dangerouslySetInnerHTML={{ __html: processedText }}
+                                                        />
+                                                    );
+                                                }
+                                            });
+
+                                            return elements;
+                                        })()}
                                     </div>
                                 </div>
                             </div>
