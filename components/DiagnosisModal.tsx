@@ -276,7 +276,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                                         // Processar negrito e parênteses
                                                         const processedText = withBreaks
                                                             .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-emerald-900">$1</strong>')
-                                                            .replace(/\(([^)]+)\)/g, '<span class="text-slate-600 text-sm">($1)</span>');
+                                                            .replace(/\(([^)]+)\)/g, '<span class="inline-block bg-emerald-50 px-2 py-0.5 rounded text-xs text-emerald-800 mx-0.5">$1</span>');
 
                                                         elements.push(
                                                             <div key={idx} className="flex items-start gap-3 py-2">
@@ -305,19 +305,30 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                                 }
                                                 // Parágrafo normal
                                                 else if (trimmed.length > 0) {
-                                                    // Adicionar quebras de linha após pontos finais
-                                                    const withBreaks = trimmed
-                                                        .split('. ')
-                                                        .map(s => s.trim())
-                                                        .filter(s => s.length > 0)
-                                                        .map(s => s.endsWith('.') ? s : s + '.')
-                                                        .join('.<br/><br/>');
-                                                    const processedText = withBreaks
+                                                    let processedText = trimmed;
+
+                                                    // 1. Detectar e formatar títulos no início (ex: "Diagnóstico Integrativo:")
+                                                    // Transforma em um bloco destacado e quebra a linha
+                                                    processedText = processedText.replace(/^([\w\sÀ-ÿ\-\/]+):/g, '<strong class="block text-emerald-800 font-black text-xs uppercase tracking-wider mb-2">$1:</strong>');
+
+                                                    // 2. Quebrar frases nos pontos finais
+                                                    processedText = processedText.replace(/\.\s+(?=[A-Z])/g, '.<div class="h-3"></div>');
+
+                                                    // 3. Quebras suaves em vírgulas para textos muito longos
+                                                    if (processedText.length > 150) {
+                                                        processedText = processedText.replace(/, /g, ', <br/>');
+                                                    }
+
+                                                    // 4. Formatar citações [1]
+                                                    processedText = processedText.replace(/\[(\d+)\]/g, '<sup class="text-emerald-600 font-bold ml-0.5 bg-emerald-50 px-1 rounded-sm">$1</sup>');
+
+                                                    // 5. Processar negrito e parênteses com destaque
+                                                    processedText = processedText
                                                         .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-emerald-900">$1</strong>')
-                                                        .replace(/\(([^)]+)\)/g, '<span class="text-slate-600 text-sm">($1)</span>');
+                                                        .replace(/\(([^)]+)\)/g, '<span class="inline-block bg-emerald-50 px-2 py-0.5 rounded text-xs text-emerald-800 mx-0.5 border border-emerald-100">$1</span>');
 
                                                     elements.push(
-                                                        <p
+                                                        <div
                                                             key={idx}
                                                             className="text-sm leading-relaxed text-slate-700"
                                                             dangerouslySetInnerHTML={{ __html: processedText }}
@@ -331,6 +342,57 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                     </div>
                                 </div>
                             </div>
+
+                            {/* 4.5. Exames Sugeridos */}
+                            {data.suggestedExams && data.suggestedExams.length > 0 && (
+                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-[2rem] border border-blue-100 shadow-sm relative overflow-hidden">
+                                    <div className="absolute -right-12 -top-12 opacity-5">
+                                        <svg className="w-64 h-64 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" /></svg>
+                                    </div>
+
+                                    <div className="relative z-10">
+                                        <h3 className="text-xs font-black text-blue-700 uppercase tracking-[0.2em] flex items-center gap-3 mb-6">
+                                            <span className="w-8 h-8 rounded-lg bg-white/60 backdrop-blur-md flex items-center justify-center border border-blue-200 shadow-sm">
+                                                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                                            </span>
+                                            Exames Sugeridos para Comprovação
+                                        </h3>
+
+                                        <div className="space-y-3">
+                                            {data.suggestedExams.map((exam, idx) => {
+                                                // Separar nome do exame e explicação
+                                                const parts = exam.split(' - ');
+                                                const examName = parts[0];
+                                                const explanation = parts[1] || '';
+
+                                                return (
+                                                    <div key={idx} className="flex items-start gap-3 bg-white/70 backdrop-blur-sm p-4 rounded-xl border border-blue-100 hover:border-blue-300 transition-colors">
+                                                        <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center mt-0.5">
+                                                            {idx + 1}
+                                                        </div>
+                                                        <div className="flex-1 text-left">
+                                                            <p className="font-bold text-sm text-blue-900">{examName}</p>
+                                                            {explanation && (
+                                                                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{explanation}</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-shrink-0">
+                                                            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="mt-6 p-4 bg-blue-100/50 rounded-xl border border-blue-200">
+                                            <p className="text-xs text-blue-800 flex items-start gap-2">
+                                                <svg className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                                                <span className="leading-relaxed"><strong className="font-bold">Importante:</strong> Esta lista é uma sugestão baseada na análise clínica. O médico assistente pode solicitar exames adicionais ou diferentes conforme necessidade.</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* 5. Recommendations */}
                             <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden">

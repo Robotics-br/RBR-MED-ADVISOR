@@ -612,6 +612,13 @@ export const runAllopathicDiagnosis = async (profile: PatientProfile, symptoms: 
           "Risco de Hipercalemia (excesso de potássio no sangue) ao combinar Losartana com Espironolactona - CRÍTICO"
        ],
        "finalConsensus": "Diagnóstico consensual final (Markdown permitido)",
+       "suggestedExams": [
+          "Hemograma completo - Para avaliar células sanguíneas e detectar anemia ou infecções",
+          "TSH e T4 livre - Avaliação da função tireoidiana (glândula que regula metabolismo)",
+          "Glicemia de jejum e HbA1c - Investigação de diabetes (açúcar no sangue elevado)",
+          "Ecocardiograma - Ultrassom do coração para avaliar bombeamento e válvulas",
+          "ECG - Registro elétrico do coração para detectar arritmias (batimentos irregulares)"
+       ],
        "recommendations": "Plano terapêutico (Markdown permitido)",
        "disclaimer": "Este relatório foi gerado por IA como ferramenta auxiliar. Não substitui consulta médica presencial.",
        "references": [
@@ -727,6 +734,13 @@ export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms:
           "Losartana pode causar Hipotensão ortostática (tontura ao levantar por queda de pressão) - monitorar"
        ],
        "finalConsensus": "Diagnóstico integrativo consensual (Markdown permitido)",
+       "suggestedExams": [
+          "Hemograma completo - Avaliar vitalidade sanguínea e reservas energéticas",
+          "Perfil metabólico - Função hepática e renal (fígado e rins) para avaliar capacidade de eliminação",
+          "Análise de oligoelementos - Zinco, magnésio, selênio (minerais essenciais para energia)",
+          "Cortisol salivar (manhã e noite) - Avaliar ritmo circadiano (ciclo dia-noite) e estresse",
+          "Teste de Intolerâncias alimentares - IgG para alimentos (reações do corpo a comidas)"
+       ],
        "recommendations": "Plano terapêutico: homeopatia, fitoterapia, acupuntura, etc. (Markdown permitido)",
        "disclaimer": "Este relatório foi gerado por IA como ferramenta auxiliar. Não substitui consulta médica presencial.",
        "references": [

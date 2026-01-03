@@ -140,6 +140,7 @@ export interface DiagnosisResult {
   highRiskInteractions: string[]; // Only high risk
   comorbiditiesAnalysis: string; // Logic applied to comorbidities
   finalConsensus: string; // The diagnosis
+  suggestedExams?: string[]; // Exames sugeridos para comprovação diagnóstica
   recommendations: string;
   disclaimer: string;
   references: { title: string; url: string }[];
