@@ -579,6 +579,7 @@ export const runAllopathicDiagnosis = async (profile: PatientProfile, symptoms: 
     - Mínimo de 2 rounds, máximo de 4 rounds
     - Cada especialista deve ter no mínimo 2 falas
     - IMPORTANTE: No campo "speaker" da "conversation", use APENAS a especialidade (ex: "Cardiologia", "Endocrinologia") SEM nomes de médicos
+    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, você DEVE incluir na junta um "Patologista Clínica / Radiologista" para realizar a interpretação técnica desses dados específicos durante o debate.
     
     ---
     
@@ -698,6 +699,7 @@ export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms:
     - Mínimo de 2 rounds, máximo de 4 rounds
     - Cada especialista deve contribuir com no mínimo 2 falas
     - IMPORTANTE: No campo "speaker" da "conversation", use APENAS a especialidade (ex: "Homeopatia", "Medicina Tradicional Chinesa") SEM nomes/títulos de médicos
+    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, inclua um "Especialista em Diagnóstico Integrativo" focado em correlacionar os laudos laboratoriais/imagem com o terreno biológico do paciente.
     
     ---
     
@@ -781,5 +783,67 @@ export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms:
     } catch (e) {
         console.error("Erro no diagnóstico homeopático", e);
         throw new Error("Falha ao gerar diagnóstico da junta médica integrativa.");
+    }
+};
+export const analyzeClinicalExam = async (imageUrls: string[]): Promise<string> => {
+    if (!imageUrls || imageUrls.length === 0) return "";
+
+    const prompt = `
+    Atue como um Especialista em Diagnóstico Complementar (Radiologia e Patologia Clínica).
+    Analise as imagens de exames clínicos fornecidas.
+    
+    OBJETIVO:
+    Gerar um RELATÓRIO TÉCNICO PRELIMINAR para ser apresentado a uma JUNTA MÉDICA de especialistas.
+    
+    ESTRUTURA DO RELATÓRIO:
+    1. RESUMO DOS ACHADOS: Liste alterações laboratoriais (hemograma, bioquímica, hormônios) e/ou achados de imagem.
+    2. ALERTAS CRÍTICOS: Destaque valores que representam risco imediato ou alterações graves.
+    3. CORRELAÇÃO SUGERIDA: Indique brevemente como estes achados podem se relacionar com sintomas comuns (Ex: "Anemia microcítica sugere deficiência de ferro").
+    
+    REGRAS:
+    - Linguagem técnica profissional com explicações entre parênteses para termos complexos.
+    - Mantenha em Português (Brasil).
+    - Se houver múltiplos exames, organize por data ou tipo.
+    - Se a imagem for ilegível, solicite novo envio.
+    `;
+
+    try {
+        const content = imageUrls.map(url => ({
+            type: "image_url",
+            image_url: { url }
+        }));
+
+        // @ts-ignore
+        content.unshift({ type: "text", text: prompt });
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "google/gemini-2.0-flash-001",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": content
+                    }
+                ],
+                "temperature": 0.1
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro na análise de imagem: ${response.status}`);
+        }
+
+        const json = await response.json();
+        return json.choices?.[0]?.message?.content || "Não foi possível extrair dados dos exames.";
+    } catch (e) {
+        console.error("Erro na análise de exame", e);
+        throw new Error("Falha ao analisar as imagens dos exames.");
     }
 };

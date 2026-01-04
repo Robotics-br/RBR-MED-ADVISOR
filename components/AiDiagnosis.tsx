@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Medication, PatientProfile, Cid10Result, MedicationSuggestion, DiagnosisResult } from '../types';
-import { searchCid10, searchMedication, runAllopathicDiagnosis, runHomeopathicDiagnosis } from '../services/openRouterService';
+import { searchCid10, searchMedication, runAllopathicDiagnosis, runHomeopathicDiagnosis, analyzeClinicalExam } from '../services/openRouterService';
 import { DiagnosisModal } from './DiagnosisModal';
 
 const commonDiseases = [
@@ -30,7 +30,7 @@ export const AiDiagnosis: React.FC = () => {
     const [diagnosisData, setDiagnosisData] = useState<DiagnosisResult | null>(null);
 
     const [expandedSections, setExpandedSections] = useState({
-        identification: true, vitals: false, history: false, habits: false, meds: false, symptoms: true
+        identification: true, vitals: false, history: false, habits: false, meds: false, symptoms: true, exams: false
     });
 
     const [profile, setProfile] = useState<PatientProfile>({
@@ -39,7 +39,8 @@ export const AiDiagnosis: React.FC = () => {
         diseases: '', allergies: '', previousSurgeries: '', familyHistory: '',
         smoking: 'Não', alcohol: 'Não consome', physicalActivity: 'Sedentário',
         isPregnant: false, gestationalWeeks: '', menopause: false, lastMenstrualPeriod: '',
-        otherSubstances: '', medications: [], recentExams: '', vaccinationStatus: ''
+        otherSubstances: '', medications: [], recentExams: '', vaccinationStatus: '',
+        examImages: [], examAnalysis: ''
     });
 
     const [symptoms, setSymptoms] = useState('');
@@ -55,6 +56,7 @@ export const AiDiagnosis: React.FC = () => {
     const [medResults, setMedResults] = useState<MedicationSuggestion[]>([]);
     const [showMedDropdown, setShowMedDropdown] = useState(false);
     const [searchingMed, setSearchingMed] = useState(false);
+    const [analyzingExams, setAnalyzingExams] = useState(false);
 
     // CID-10 para Comorbidades
     const [cidResults, setCidResults] = useState<Cid10Result[]>([]);
@@ -203,13 +205,81 @@ export const AiDiagnosis: React.FC = () => {
         setModalOpen(true);
         setDiagnosisData(null);
         try {
-            const result = type === 'ALLOPATHIC' ? await runAllopathicDiagnosis(profile, symptoms) : await runHomeopathicDiagnosis(profile, symptoms);
+            // Se houver análise de exame, injetar nos sintomas para a IA considerar
+            const enrichedSymptoms = profile.examAnalysis
+                ? `${symptoms}\n\n[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]:\n${profile.examAnalysis}`
+                : symptoms;
+
+            const result = type === 'ALLOPATHIC' ? await runAllopathicDiagnosis(profile, enrichedSymptoms) : await runHomeopathicDiagnosis(profile, enrichedSymptoms);
             setDiagnosisData(result);
         } catch (err) {
             setError("Falha ao gerar diagnóstico.");
             setModalOpen(false);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        setAnalyzingExams(true);
+        const newImages: string[] = [];
+
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                const base64 = await new Promise<string>((resolve) => {
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                });
+                newImages.push(base64);
+            }
+
+            const updatedImages = [...(profile.examImages || []), ...newImages];
+            setProfile(prev => ({
+                ...prev,
+                examImages: updatedImages
+            }));
+
+            // Chamar a análise da IA para as novas imagens
+            const analysis = await analyzeClinicalExam(newImages);
+
+            setProfile(prev => ({
+                ...prev,
+                examAnalysis: prev.examAnalysis
+                    ? `${prev.examAnalysis}\n\n--- Nova Análise ---\n${analysis}`
+                    : analysis
+            }));
+
+        } catch (err) {
+            console.error(err);
+            setError("Erro ao processar as imagens dos exames.");
+        } finally {
+            setAnalyzingExams(false);
+        }
+    };
+
+    const removeExamImage = (index: number) => {
+        setProfile(prev => ({
+            ...prev,
+            examImages: prev.examImages?.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleReanalyzeAll = async () => {
+        if (!profile.examImages || profile.examImages.length === 0) return;
+        setAnalyzingExams(true);
+        try {
+            const analysis = await analyzeClinicalExam(profile.examImages);
+            setProfile(prev => ({ ...prev, examAnalysis: analysis }));
+        } catch (err) {
+            console.error(err);
+            setError("Erro ao reanalisar exames.");
+        } finally {
+            setAnalyzingExams(false);
         }
     };
     return (
@@ -477,6 +547,100 @@ export const AiDiagnosis: React.FC = () => {
                     <SectionHeader number="6" title="Sintomas e Queixa Principal *" isOpen={expandedSections.symptoms} toggle={() => toggleSection('symptoms')} color="orange" />
                     {expandedSections.symptoms && (
                         <div className="p-6"><textarea value={symptoms} onChange={e => setSymptoms(e.target.value)} className="w-full h-40 px-4 py-3 border rounded-xl" placeholder="Descreva detalhadamente os sintomas, tempo de evolução, intensidade..." /></div>
+                    )}
+                </div>
+
+                {/* Seção 7: Exames Complementares */}
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                    <SectionHeader number="7" title="Exames Complementares (Upload/Foto)" isOpen={expandedSections.exams} toggle={() => toggleSection('exams')} color="indigo" />
+                    {expandedSections.exams && (
+                        <div className="p-6 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <label className="block text-sm font-bold text-slate-700">Adicionar Exames</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-indigo-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-400 transition-all cursor-pointer group">
+                                            <svg className="w-8 h-8 text-indigo-400 group-hover:text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <span className="text-xs font-bold text-indigo-600">Usar Câmera</span>
+                                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} />
+                                        </label>
+
+                                        <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-indigo-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-400 transition-all cursor-pointer group">
+                                            <svg className="w-8 h-8 text-indigo-400 group-hover:text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            <span className="text-xs font-bold text-indigo-600">Escolher Arquivo</span>
+                                            <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileUpload} />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="block text-sm font-bold text-slate-700">Imagens Anexadas</label>
+                                    <div className="grid grid-cols-3 gap-2 min-h-[100px] bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        {profile.examImages && profile.examImages.length > 0 ? (
+                                            profile.examImages.map((img, idx) => (
+                                                <div key={idx} className="relative aspect-square rounded-lg overflow-hidden shadow-sm group">
+                                                    <img src={img} alt={`Exame ${idx + 1}`} className="w-full h-full object-cover" />
+                                                    <button
+                                                        onClick={() => removeExamImage(idx)}
+                                                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-3 flex items-center justify-center h-full">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nenhum anexo</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {profile.examImages && profile.examImages.length > 0 && (
+                                <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 animate-fade-in">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                            Processamento de Exames com IA
+                                        </h4>
+                                        <div className="flex items-center gap-2">
+                                            {analyzingExams ? (
+                                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">Analisando...</span>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={handleReanalyzeAll}
+                                                        className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors"
+                                                    >
+                                                        Reanalisar Tudo
+                                                    </button>
+                                                    <span className="text-indigo-300">|</span>
+                                                    <button
+                                                        onClick={() => setProfile({ ...profile, examAnalysis: '' })}
+                                                        className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-700 transition-colors"
+                                                    >
+                                                        Limpar
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <textarea
+                                        className="w-full h-32 p-4 bg-white/50 border border-indigo-200 rounded-xl text-sm text-slate-700 focus:bg-white outline-none transition-all"
+                                        placeholder="O resultado da análise automática aparecerá aqui. Você também pode digitar detalhes adicionais sobre o exame..."
+                                        value={profile.examAnalysis}
+                                        onChange={e => setProfile({ ...profile, examAnalysis: e.target.value })}
+                                    />
+                                    <p className="mt-2 text-[10px] text-indigo-400 font-medium">A IA identificará alterações nos exames laboratoriais ou de imagem para enriquecer o diagnóstico.</p>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

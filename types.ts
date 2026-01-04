@@ -82,6 +82,8 @@ export interface PatientProfile {
   // Dados Complementares
   recentExams?: string; // Últimos exames laboratoriais
   vaccinationStatus?: string; // Status vacinal relevante
+  examImages?: string[]; // Imagens de exames (Base64)
+  examAnalysis?: string; // Análise automática dos exames
 }
 
 export interface InteractionResult {
