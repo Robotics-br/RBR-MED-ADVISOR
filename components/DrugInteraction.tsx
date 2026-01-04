@@ -120,7 +120,7 @@ export const DrugInteraction: React.FC = () => {
     const handleCidSearch = async (val: string) => {
         setCurrentMed({ ...currentMed, reason: val });
 
-        if (val.length >= 3) {
+        if (val.length >= 2) {
             setSearchingCid(true);
             try {
                 const results = await searchCid10(val);
@@ -151,7 +151,7 @@ export const DrugInteraction: React.FC = () => {
     const handleMedSearch = async (val: string) => {
         setCurrentMed({ ...currentMed, name: val });
 
-        if (val.length >= 3) {
+        if (val.length >= 2) {
             setSearchingMed(true);
             try {
                 const results = await searchMedication(val);
@@ -724,7 +724,7 @@ export const DrugInteraction: React.FC = () => {
                     {/* Header */}
                     <div className="flex flex-col md:flex-row items-center justify-between pb-8 border-b border-slate-200 gap-4">
                         <div className="text-left">
-                            <h3 className="text-3xl font-black text-slate-900 tracking-tight">Análise da Junta Médica</h3>
+                            <h3 className="text-3xl font-black text-slate-900 tracking-tight">Análise da Junta Médica (20+ anos de Experiência)</h3>
                             <p className="text-slate-500 mt-1">Relatório final baseado em evidências clínicas reais</p>
                         </div>
                         <div className="flex space-x-3 w-full md:w-auto">
@@ -1022,6 +1022,37 @@ export const DrugInteraction: React.FC = () => {
                             </div>
                         ))}
                     </div>
+
+                    {/* Consulted Sources */}
+                    {result.references && result.references.length > 0 && (
+                        <div className="bg-white rounded-[2rem] p-8 md:p-10 border border-slate-100 shadow-sm">
+                            <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                Fontes Consultadas (Páginas e Bases Técnicas)
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {result.references.map((ref, i) => (
+                                    <a
+                                        key={i}
+                                        href={ref.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-start p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+                                    >
+                                        <div className="mr-3 mt-1">
+                                            <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{ref.title}</p>
+                                            <p className="text-[10px] text-slate-400 truncate max-w-xs">{ref.url}</p>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Disclaimer */}
                     <div className="text-center pt-10 border-t border-slate-100">

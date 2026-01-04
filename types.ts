@@ -116,6 +116,7 @@ export interface DrugInteractionAnalysis {
   generalWarnings: string[];
   scheduleSuggestions: string; // Markdown text
   physicianAnalysis: string; // Senior Physician's clinical validation report
+  references?: { title: string; url: string }[];
 }
 
 export interface Cid10Result {

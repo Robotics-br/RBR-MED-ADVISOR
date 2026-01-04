@@ -75,6 +75,7 @@ export const verifyMedicationEfficacy = async (disease: string, medication: stri
     1. Busque primeiro ensaios clínicos randomizados e revisões sistemáticas em: ${BASE_SOURCES}
     2. PRIORIDADE MÁXIMA: JAMA, NEJM, Lancet e Cochrane.
     3. IMPORTANTE: Se o medicamento for comum em regiões específicas (ex: Dipirona no Brasil/Europa) mas restrito nos EUA, EXPANDA a busca para artigos no PubMed, SciELO, European Medicines Agency ou diretrizes clínicas locais confiáveis.
+    4. LINKS DE REFERÊNCIA: Forneça apenas URLs REAIS e ATIVAS. Priorize links do PubMed (nih.gov), DOI.org ou páginas principais de periódicos renomados. Evite links profundos que possam expirar.
     
     REGRAS DE RESPOSTA:
     1. Se encontrar evidências robustas: Retorne o JSON com os dados do estudo.
@@ -324,13 +325,14 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
 
     ---
     REGRAS DE LINGUAGEM:
-    - OBRIGATÓRIO: Sempre que utilizar um termo médico técnico, coloque entre parênteses o seu significado popular correspondente (ex: Dislipidemia (colesterol alto), Epistaxe (sangramento no nariz)).
+    - OBRIGATÓRIO (REGRA DE OURO): Sempre que utilizar um termo médico técnico, jargão ou conceito complexo, coloque IMEDIATAMENTE entre parênteses o seu significado popular correspondente (ex: Dislipidemia (colesterol alto), Epistaxe (sangramento no nariz)). Esta regra aplica-se a TODO o conteúdo do JSON, incluindo descrições e o parecer final.
+    - VALIDAR LINKS: As URLs em "references" DEVEM ser reais e funcionar. Prefira links permanentes como DOI ou PubMed IDs (PMID) convertidos em links.
 
     ---
     ESTRUTURA DE ANÁLISE (PIPELINE):
 
     ETAPA 0: ESPECIALISTAS POR ÁREA (CONSULTA PRÉVIA)
-    Para CADA comorbidade listada acima, imagine um médico especialista (ex: Cardiologista para HAS, Endocrinologista para Diabetes, etc) com >10 anos de experiência analisando:
+    Para CADA comorbidade listada acima, imagine um médico especialista (ex: Cardiologista para HAS, Endocrinologista para Diabetes, etc) com no MÍNIMO 20 anos de experiência clínica absoluta analisando:
     - A adequação dos medicamentos atuais para aquela patologia específica.
     - O impacto da idade (${profile.age}) e peso (${profile.weight}) no manejo da doença.
     
@@ -386,7 +388,10 @@ export const analyzeDrugInteractions = async (profile: PatientProfile): Promise<
       ],
       "physicianAnalysis": "Markdown: Texto organizado conforme as seções definidas na Etapa 2.",
       "generalWarnings": ["Aviso 1", "Aviso 2"],
-      "scheduleSuggestions": "OBRIGATÓRIO: Retorne uma tabela Markdown estrita com 3 colunas: | Fármaco | Horário Sugerido | Justificativa Clínica |. Use apenas os nomes dos medicamentos na primeira coluna. Não inclua textos introdutórios ou títulos fora da tabela."
+      "scheduleSuggestions": "OBRIGATÓRIO: Retorne uma tabela Markdown estrita com 3 colunas: | Fármaco | Horário Sugerido | Justificativa Clínica |. Use apenas os nomes dos medicamentos na primeira coluna. Não inclua textos introdutórios ou títulos fora da tabela.",
+      "references": [
+        { "title": "Nome da fonte (incluindo página ou seção se disponível)", "url": "URL direta da fonte consultada" }
+      ]
     }
     `;
 
@@ -868,6 +873,7 @@ export const runTruthMythAnalysis = async (medication: string, purpose: string):
     - Mínimo de 3 rounds de conversa.
     - Linguagem clara para um LEIGO, mas mantendo o rigor técnico nas entrelinhas.
     - Se houver riscos de "off-label" perigoso, avisem severamente.
+    - FONTES: Use apenas links de domínios confiáveis (PubMed, Mayo Clinic, Cochrane, etc). Verifique a consistência da URL antes de gerar.
     
     SAÍDA ESPERADA (JSON válido, sem markdown):
     {
