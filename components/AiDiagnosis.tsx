@@ -5,11 +5,12 @@ import { DiagnosisModal } from './DiagnosisModal';
 
 const commonDiseases = [
     "AVC", "Anemia Falciforme", "Apneia do Sono", "Arritmia", "Artrite/Artrose", "Asma",
-    "Câncer", "Cirrose", "Demência", "Depressão", "Diabetes tipo 1", "Diabetes tipo 2", "Pré-Diabetes",
+    "Câncer", "Cirrose", "Demência", "Depressão", "Diabetes (tipo 1/2)", "Pré-Diabetes",
     "Dislipidemia", "Distúrbio Tireoidiano", "Doença Coronariana", "Refluxo",
     "DPOC", "Doença Renal Crônica", "Dor Lombar", "Enxaqueca",
-    "Hipertensão", "Hipotireoidismo", "Insuficiência Cardíaca",
-    "Obesidade", "Osteoporose", "Ansiedade"
+    "Esclerose Múltipla", "Fibromialgia", "Gastrite",
+    "Hipertensão", "Hipotireoidismo", "Insuficiência Cardíaca", "Neuropatia",
+    "Obesidade", "Osteoporose", "Sinusite Crônica", "Ansiedade", "Zumbido"
 ];
 
 const SectionHeader = ({ number, title, isOpen, toggle, color }: any) => (
