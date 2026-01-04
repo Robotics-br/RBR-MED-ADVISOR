@@ -930,3 +930,92 @@ export const runTruthMythAnalysis = async (medication: string, purpose: string):
         throw new Error("Falha ao gerar debate da junta médica.");
     }
 };
+
+export const runTreatmentBoardAnalysis = async (disease: string, medication: string | null, type: 'ALLOPATHIC' | 'HOMEOPATHIC'): Promise<DiagnosisResult> => {
+    const isVerify = !!medication;
+    const prompt = `
+    ATUE COMO UM CONSELHO MÉDICO SÊNIOR COMPOSTO POR 3 ESPECIALISTAS COM NO MÍNIMO 20 ANOS DE EXPERIÊNCIA CLÍNICA CADA.
+    
+    OBJETO DE ANÁLISE:
+    - CONDIÇÃO CLÍNICA: "${disease}"
+    ${isVerify ? `- FÁRMACO ESPECÍFICO PARA VALIDAR: "${medication}"` : '- TAREFA: Identificar e debater os tratamentos mais eficazes (Alopáticos ou Integrativos conforme solicitado).'}
+    - TIPO DE JUNTA: ${type === 'ALLOPATHIC' ? 'ALOPÁTICA (Medicina Convencional)' : 'INTEGRATIVA/HOMEOPÁTICA'}
+    
+    REQUISITOS DA JUNTA:
+    1. Composição: 3 médicos líderes em suas áreas (ex: Infectologista PhD, Farmacêutico Clínico Sênior, Especialista na Patologia específica).
+    2. Dinâmica: Os especialistas DEVEM se desafiar, questionar a base de evidências uns dos outros e discutir casos reais/testes clínicos antes de chegarem ao consenso.
+    3. Linguagem: REGRA DE OURO - Para CADA jargão técnico ou termo médico, coloque IMEDIATAMENTE entre parênteses a tradução popular para um leigo.
+    
+    ESTRUTURA DA RESPOSTA (JSON VÁLIDO - SEM MARKDOWN):
+    {
+       "boardMembers": [
+         {"name": "...", "specialty": "...", "experience": "20+ anos", "role": "..."}
+       ],
+       "conversation": [
+         {"speaker": "...", "message": "...", "round": 1}
+       ],
+       "discussionSummary": "Resumo do embate técnico focado em evidências e testes.",
+       "finalConsensus": "# CONSENSO FINAL\\n\\nDecisão da junta sobre a melhor conduta...",
+       "recommendations": "Recomendações práticas...",
+       "disclaimer": "...",
+       "references": [{"title": "...", "url": "..."}],
+       "highRiskInteractions": [], "comorbiditiesAnalysis": "Análise técnica"
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "google/gemini-2.0-flash-001",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a Medical Board Simulation Engine. Output ONLY valid JSON. No markdown backticks, no preamble, no explanations outside the JSON."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.3,
+                "response_format": { "type": "json_object" }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const json = await response.json();
+        let content = json.choices?.[0]?.message?.content || "{}";
+
+        // Final fallback to clean common AI prefixes
+        const cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleanContent);
+
+        // Normalize fields to prevent UI crashes
+        return {
+            boardMembers: parsed.boardMembers || [],
+            conversation: parsed.conversation || [],
+            discussionSummary: parsed.discussionSummary || "",
+            finalConsensus: parsed.finalConsensus || "",
+            recommendations: parsed.recommendations || "",
+            disclaimer: parsed.disclaimer || "Aviso: Uso informativo apenas.",
+            references: parsed.references || [],
+            highRiskInteractions: parsed.highRiskInteractions || [],
+            comorbiditiesAnalysis: parsed.comorbiditiesAnalysis || "",
+            suggestedExams: parsed.suggestedExams || []
+        } as DiagnosisResult;
+
+    } catch (e) {
+        console.error("Erro na junta médica de tratamentos", e);
+        throw e;
+    }
+};

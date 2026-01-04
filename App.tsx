@@ -6,12 +6,13 @@ import { VisualAnalysis } from './components/VisualAnalysis';
 import { StudyDetailsModal } from './components/StudyDetailsModal';
 import { SourceRelevance } from './components/SourceRelevance';
 import { ExamChecklist } from './components/ExamChecklist';
-import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy, searchCid10, searchMedication } from './services/openRouterService';
-import { ResearchResponse, StudyResult, StudyExplanation, Cid10Result, MedicationSuggestion } from './types';
+import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy, searchCid10, searchMedication, runTreatmentBoardAnalysis } from './services/openRouterService';
+import { ResearchResponse, StudyResult, StudyExplanation, Cid10Result, MedicationSuggestion, DiagnosisResult } from './types';
 
 import { DrugInteraction } from './components/DrugInteraction';
 import { AiDiagnosis } from './components/AiDiagnosis';
 import { TruthMyth } from './components/TruthMyth';
+import { DiagnosisModal } from './components/DiagnosisModal';
 import { Login } from './components/Login';
 
 type SearchMode = 'discover' | 'verify' | 'interactions' | 'diagnosis' | 'truth_myth';
@@ -24,6 +25,8 @@ const App: React.FC = () => {
   const [medicationQuery, setMedicationQuery] = useState('');
   const [activeMode, setActiveMode] = useState<SearchMode | null>(null);
   const [showMenu, setShowMenu] = useState(true);
+  const [boardResult, setBoardResult] = useState<DiagnosisResult | null>(null);
+  const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
 
   const handleGoToMenu = () => {
     setActiveMode(null);
@@ -152,28 +155,44 @@ const App: React.FC = () => {
     )
   }
 
-  const handleSearch = useCallback(async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSearch = useCallback(async (arg1?: 'ALLOPATHIC' | 'HOMEOPATHIC' | React.FormEvent, arg2?: React.FormEvent) => {
+    let event: React.FormEvent | undefined;
+    let boardType: 'ALLOPATHIC' | 'HOMEOPATHIC' | undefined;
+
+    if (typeof arg1 === 'string') {
+      boardType = arg1 as any;
+      event = arg2;
+    } else {
+      event = arg1 as any;
+    }
+
+    if (event?.preventDefault) event.preventDefault();
     if (!query.trim()) return;
     if (activeMode === 'verify' && !medicationQuery.trim()) return;
-    if (activeMode === 'interactions') return;
-    if (activeMode === 'diagnosis') return;
 
     setLoading(true);
     setError(null);
     setData(null);
+    setBoardResult(null);
 
     try {
-      let result;
-      if (activeMode === 'discover') {
-        result = await searchMedicalTrials(query);
-      } else if (activeMode === 'verify') {
-        result = await verifyMedicationEfficacy(query, medicationQuery);
+      if (boardType) {
+        setIsBoardModalOpen(true);
+        const result = await runTreatmentBoardAnalysis(query, activeMode === 'verify' ? medicationQuery : null, boardType);
+        setBoardResult(result);
+      } else {
+        let result;
+        if (activeMode === 'discover') {
+          result = await searchMedicalTrials(query);
+        } else if (activeMode === 'verify') {
+          result = await verifyMedicationEfficacy(query, medicationQuery);
+        }
+        if (result) setData(result);
       }
-      if (result) setData(result);
     } catch (err) {
       setError("Ocorreu um erro ao realizar a pesquisa. Verifique sua conexão ou tente novamente.");
       console.error(err);
+      setIsBoardModalOpen(false);
     } finally {
       setLoading(false);
     }
@@ -422,15 +441,32 @@ const App: React.FC = () => {
                       )}
                     </div>
 
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <button
+                        type="button"
+                        onClick={(e) => handleSearch('ALLOPATHIC', e)}
+                        disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
+                        className="flex-1 flex items-center justify-center px-6 py-7 bg-medical-navy text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-brand-600 transition-all duration-500 shadow-xl disabled:opacity-20 group/btn relative overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                        <span className="relative z-10">{loading ? 'Convocando...' : 'Junta Alopática (20+ anos)'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleSearch('HOMEOPATHIC', e)}
+                        disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
+                        className="flex-1 flex items-center justify-center px-6 py-7 bg-teal-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-teal-700 transition-all duration-500 shadow-xl disabled:opacity-20 group/btn relative overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-teal-700 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                        <span className="relative z-10 text-center">{loading ? 'Convocando...' : 'Junta Integrativa (20+ anos)'}</span>
+                      </button>
+                    </div>
                     <button
                       type="submit"
                       disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
-                      className="w-full flex items-center justify-center px-10 py-7 bg-medical-navy text-white rounded-2xl font-black text-xs uppercase tracking-[0.4em] hover:bg-brand-600 transition-all duration-500 shadow-xl disabled:opacity-20 disabled:cursor-not-allowed group/btn overflow-hidden relative"
+                      className="w-full text-center py-4 text-slate-400 font-black text-[9px] uppercase tracking-[0.3em] hover:text-brand-500 transition-colors"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-brand-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-500"></div>
-                      <span className="relative z-10">
-                        {loading ? 'Processando Investigação...' : 'Iniciar Investigação'}
-                      </span>
+                      Ou realizar Busca por Estudos Rápidos
                     </button>
                   </form>
 
@@ -584,6 +620,13 @@ const App: React.FC = () => {
         .tracking-tight { letter-spacing: -0.025em; }
         .shadow-premium { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.1); }
       `}</style>
+      <DiagnosisModal
+        isOpen={isBoardModalOpen}
+        onClose={() => setIsBoardModalOpen(false)}
+        data={boardResult}
+        loading={loading}
+        title={activeMode === 'verify' ? "Validação de Eficácia por Junta Médica" : "Análise Terapêutica por Junta Médica"}
+      />
     </div>
   );
 };

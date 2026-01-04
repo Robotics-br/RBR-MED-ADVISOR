@@ -95,12 +95,12 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                         Especialistas Convocados
                                     </h3>
                                     <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                        {data.boardMembers.length} Membros
+                                        {(data?.boardMembers || []).length} Membros
                                     </span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                    {data.boardMembers.map((member, idx) => (
+                                    {(data?.boardMembers || []).map((member, idx) => (
                                         <div key={idx} className="group bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-[0_2px_10px_-2px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.06)] hover:border-brand-100 transition-all duration-300 relative overflow-hidden">
                                             <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-10 transition-opacity">
                                                 <svg className="w-24 h-24 text-brand-900" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-2-2 1.41-1.41L10 14.17l4.59-4.59L16 11l-6 6z" /></svg>
@@ -140,7 +140,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                             </div>
                                             <div className="text-left">
                                                 <h3 className="font-bold text-indigo-900 text-sm">Debate Entre Especialistas</h3>
-                                                <p className="text-xs text-indigo-600">{data.conversation.length} mensagens • {Math.max(...data.conversation.map(c => c.round))} rounds</p>
+                                                <p className="text-xs text-indigo-600">{(data?.conversation || []).length} mensagens • {Math.max(0, ...(data?.conversation || []).map(c => c.round || 0))} rounds</p>
                                             </div>
                                         </div>
                                         <svg className={`w-6 h-6 text-indigo-600 transition-transform ${showConversation ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -148,7 +148,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
 
                                     {showConversation && (
                                         <div className="mt-6 space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar relative z-10">
-                                            {Array.from(new Set(data.conversation.map(c => c.round))).sort().map((roundNum) => (
+                                            {Array.from(new Set((data?.conversation || []).map(c => c.round || 0))).sort((a, b) => (a as number) - (b as number)).filter(r => (r as number) > 0).map((roundNum) => (
                                                 <div key={roundNum} className="space-y-3">
                                                     <div className="flex items-center gap-2 sticky top-0 bg-indigo-100/90 backdrop-blur-sm px-3 py-2 rounded-lg z-20">
                                                         <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">{roundNum}</span>
@@ -220,7 +220,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                         Análise de Comorbidades
                                     </h3>
                                     <div className="prose prose-slate max-w-none text-slate-600 leading-loose text-left text-sm">
-                                        <div dangerouslySetInnerHTML={{ __html: data.comorbiditiesAnalysis.replace(/\. /g, '.<br/><br/>').replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>') }} />
+                                        <div dangerouslySetInnerHTML={{ __html: (data?.comorbiditiesAnalysis || '').replace(/\. /g, '.<br/><br/>').replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-900">$1</strong>') }} />
                                     </div>
                                 </div>
 
@@ -232,7 +232,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                         Debate da Junta
                                     </h3>
                                     <div className="prose prose-slate max-w-none text-slate-600 leading-loose text-left text-sm bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                        <div dangerouslySetInnerHTML={{ __html: data.discussionSummary.replace(/\. /g, '.<br/><br/>').replace(/\n/g, '<br/>').replace(/"(.*?)"/g, '<span class=\'italic text-slate-800 font-medium\'>"$1"</span>').replace(/-\s*\*\*(?:Dr\(a\)\.?|Dr\.?)\s*(.*?)\*\*/g, '<strong class=\'text-slate-900 block mt-2\'>$1</strong>').replace(/-\s*\*\*(.*?)\*\*/g, '<strong class=\'text-slate-900 block mt-2\'>$1</strong>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                        <div dangerouslySetInnerHTML={{ __html: (data?.discussionSummary || '').replace(/\. /g, '.<br/><br/>').replace(/\n/g, '<br/>').replace(/"(.*?)"/g, '<span class=\'italic text-slate-800 font-medium\'>"$1"</span>').replace(/-\s*\*\*(?:Dr\(a\)\.?|Dr\.?)\s*(.*?)\*\*/g, '<strong class=\'text-slate-900 block mt-2\'>$1</strong>').replace(/-\s*\*\*(.*?)\*\*/g, '<strong class=\'text-slate-900 block mt-2\'>$1</strong>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                                     </div>
                                 </div>
                             </div>
@@ -255,7 +255,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
 
                                     <div className="text-slate-700 text-left space-y-4">
                                         {(() => {
-                                            const content = data.finalConsensus;
+                                            const content = data?.finalConsensus || '';
                                             const lines = content.split('\n').filter(l => l.trim());
                                             const elements: React.ReactNode[] = [];
 
@@ -406,7 +406,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                 </h3>
                                 <div className="prose prose-slate max-w-none text-slate-700 pl-2 text-left">
                                     {(() => {
-                                        const lines = data.recommendations.split('\n');
+                                        const lines = (data?.recommendations || '').split('\n');
                                         const nodes: React.ReactNode[] = [];
                                         let tableBuffer: string[] = [];
 
