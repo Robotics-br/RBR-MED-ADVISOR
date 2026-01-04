@@ -847,3 +847,80 @@ export const analyzeClinicalExam = async (imageUrls: string[]): Promise<string> 
         throw new Error("Falha ao analisar as imagens dos exames.");
     }
 };
+export const runTruthMythAnalysis = async (medication: string, purpose: string): Promise<DiagnosisResult> => {
+    const prompt = `
+    ⚖️ MODO: JUNTA MÉDICA - VERDADE OU MITO ⚖️
+    
+    COMPOSIÇÃO DA JUNTA:
+    1. Especialista em Farmacologia Clínica (Rigor técnico)
+    2. Médico Internista (Visão prática de consultório)
+    3. Pesquisador em Medicina Baseada em Evidências (EB-Medicine)
+    
+    OBJETO DE ANÁLISE:
+    - Medicamento: "${medication}"
+    - Finalidade pretendida pelo usuário: "${purpose}"
+    
+    TAREFA:
+    Debatam entre si se o uso deste medicamento para esta finalidade específica é uma VERDADE (Eficaz/Recomendado), 
+    um MITO (Ineficaz/Sem evidência) ou uma VERDADE PARCIAL (Eficaz apenas em condições específicas).
+    
+    REGRAS DA DISCUSSÃO:
+    - Mínimo de 3 rounds de conversa.
+    - Linguagem clara para um LEIGO, mas mantendo o rigor técnico nas entrelinhas.
+    - Se houver riscos de "off-label" perigoso, avisem severamente.
+    
+    SAÍDA ESPERADA (JSON válido, sem markdown):
+    {
+       "boardMembers": [
+         {"name": "Dra. Elisa Fagundes", "specialty": "Farmacologia Clínica", "experience": "USP/Harvard", "role": "Analista de Mecanismo de Ação"},
+         {"name": "Dr. Marcos Silveira", "specialty": "Clínica Médica", "experience": "25 anos de prática", "role": "Perspectiva Clínica Real"},
+         {"name": "Dr. Ricardo Nunes", "specialty": "Medicina Baseada em Evidências", "experience": "Editor de Periódicos Médicos", "role": "Validador de Evidência"}
+       ],
+       "conversation": [
+         {"speaker": "Farmacologia Clínica", "message": "...", "round": 1},
+         {"speaker": "Medicina Baseada em Evidências", "message": "...", "round": 1},
+         ...
+       ],
+       "discussionSummary": "Resumo executivo do embate (Markdown permitido)",
+       "finalConsensus": "# VEREDITO: [VERDADE | MITO | VERDADE PARCIAL]\\n\\nExplicação detalhada e simplificada para o usuário leigo.",
+       "recommendations": "Orientações de segurança e próximos passos (Markdown permitido)",
+       "disclaimer": "Este debate é gerado por IA e tem fins informativos. Jamais se automedique.",
+       "references": [{"title": "...", "url": "..."}],
+       "highRiskInteractions": [], "comorbiditiesAnalysis": "Análise focada no uso citado"
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "HTTP-Referer": SITE_URL,
+                "X-Title": SITE_NAME,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "google/gemini-2.0-flash-001",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a Medical Board Simulation Engine. Return strictly valid JSON."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.3
+            })
+        });
+
+        const json = await response.json();
+        const cleanContent = (json.choices?.[0]?.message?.content || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanContent) as DiagnosisResult;
+    } catch (e) {
+        console.error("Erro na análise Verdade/Mito", e);
+        throw new Error("Falha ao gerar debate da junta médica.");
+    }
+};

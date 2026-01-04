@@ -11,9 +11,10 @@ import { ResearchResponse, StudyResult, StudyExplanation, Cid10Result, Medicatio
 
 import { DrugInteraction } from './components/DrugInteraction';
 import { AiDiagnosis } from './components/AiDiagnosis';
+import { TruthMyth } from './components/TruthMyth';
 import { Login } from './components/Login';
 
-type SearchMode = 'discover' | 'verify' | 'interactions' | 'diagnosis';
+type SearchMode = 'discover' | 'verify' | 'interactions' | 'diagnosis' | 'truth_myth';
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -88,7 +89,7 @@ const App: React.FC = () => {
 
   const handleCidSearch = async (val: string) => {
     setQuery(val);
-    if (val.length >= 3) {
+    if (val.length >= 2) {
       setSearchingCid(true);
       try {
         const results = await searchCid10(val);
@@ -113,7 +114,7 @@ const App: React.FC = () => {
 
   const handleMedSearch = async (val: string) => {
     setMedicationQuery(val);
-    if (val.length >= 3) {
+    if (val.length >= 2) {
       setSearchingMed(true);
       try {
         const results = await searchMedication(val);
@@ -250,6 +251,14 @@ const App: React.FC = () => {
             desc: 'Análise assistida de sintomas e hipóteses diagnósticas.',
             icon: '🧠',
             color: 'violet'
+          },
+          {
+            id: 'truth_myth',
+            title: 'Análise Direta',
+            subtitle: 'Verdade/Mito',
+            desc: 'Junta médica debate se o uso de um remédio é eficaz ou mito.',
+            icon: '⚖️',
+            color: 'orange'
           }
         ].map((item) => (
           <button
@@ -305,7 +314,7 @@ const App: React.FC = () => {
               {/* Advanced Tabs */}
               <div className="flex justify-center mb-20 overflow-hidden">
                 <div className="bg-slate-100/50 p-2 rounded-[1.5rem] flex flex-wrap justify-center border border-slate-200/50 backdrop-blur-sm gap-2">
-                  {['discover', 'verify', 'interactions', 'diagnosis'].map((mode) => (
+                  {['discover', 'verify', 'interactions', 'diagnosis', 'truth_myth'].map((mode) => (
                     <button
                       key={mode}
                       onClick={() => { setActiveMode(mode as SearchMode); setData(null); setError(null); setQuery(''); setMedicationQuery(''); }}
@@ -314,7 +323,7 @@ const App: React.FC = () => {
                         : 'text-slate-400 hover:text-slate-600'
                         }`}
                     >
-                      {mode === 'discover' ? 'Tratamentos' : mode === 'verify' ? 'Eficácia' : mode === 'interactions' ? 'Segurança' : 'Diagnóstico'}
+                      {mode === 'discover' ? 'Tratamentos' : mode === 'verify' ? 'Eficácia' : mode === 'interactions' ? 'Segurança' : mode === 'diagnosis' ? 'Diagnóstico' : 'Verdade/Mito'}
                     </button>
                   ))}
                 </div>
@@ -324,6 +333,8 @@ const App: React.FC = () => {
                 <DrugInteraction />
               ) : activeMode === 'diagnosis' ? (
                 <AiDiagnosis />
+              ) : activeMode === 'truth_myth' ? (
+                <TruthMyth />
               ) : (
                 <div className="max-w-2xl mx-auto relative z-20">
                   <form onSubmit={handleSearch} className="bg-white border border-slate-100 p-12 rounded-[3.5rem] shadow-premium space-y-10 text-left">
@@ -338,7 +349,7 @@ const App: React.FC = () => {
                             type="text"
                             value={query}
                             onChange={(e) => handleCidSearch(e.target.value)}
-                            onFocus={() => { if (cidResults.length > 0) setShowCidDropdown(true); }}
+                            onFocus={() => { if (query.length >= 2) setShowCidDropdown(true); }}
                             onBlur={() => setTimeout(() => setShowCidDropdown(false), 200)}
                             placeholder="Ex: Doença de Crohn, TEA..."
                             className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all text-xl font-bold text-medical-navy placeholder:text-slate-300 outline-none"
@@ -379,7 +390,7 @@ const App: React.FC = () => {
                               type="text"
                               value={medicationQuery}
                               onChange={(e) => handleMedSearch(e.target.value)}
-                              onFocus={() => { if (medResults.length > 0) setShowMedDropdown(true); }}
+                              onFocus={() => { if (medicationQuery.length >= 2) setShowMedDropdown(true); }}
                               onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
                               placeholder="Ex: Adalimumabe..."
                               className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all text-xl font-bold text-medical-navy placeholder:text-slate-300 outline-none"

@@ -8,11 +8,12 @@ interface DiagnosisModalProps {
     onClose: () => void;
     data: DiagnosisResult | null;
     loading: boolean;
-    profile: PatientProfile | null;
-    symptoms: string;
+    profile?: PatientProfile | null;
+    symptoms?: string;
+    title?: string;
 }
 
-export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose, data, loading, profile, symptoms }) => {
+export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose, data, loading, profile = null, symptoms = '', title = "Junta Médica Digital" }) => {
     const [showSources, setShowSources] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [showConversation, setShowConversation] = useState(false);
@@ -60,7 +61,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                         </div>
                         <div>
                             <span className="block text-[10px] font-black uppercase tracking-[0.2em] text-brand-600">Módulo de Especialistas</span>
-                            <h2 className="text-2xl font-display font-black text-slate-900 leading-none mt-1">Junta Médica Digital</h2>
+                            <h2 className="text-2xl font-display font-black text-slate-900 leading-none mt-1">{title}</h2>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all print:hidden">
