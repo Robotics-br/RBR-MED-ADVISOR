@@ -593,7 +593,7 @@ const App: React.FC = () => {
           <div className="flex flex-col items-center justify-center space-y-12">
             <div className="flex flex-col items-center">
               <span className="text-[10px] uppercase tracking-[0.5em] font-black text-slate-300 mb-6">Partner Technology</span>
-              <img src="/robotics-logo.png" alt="RoboticsBr" className="h-10 w-auto opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700" />
+              <img src="/robotics-logo.png" alt="RoboticsBr" className="h-28 w-auto transition-all duration-700" />
             </div>
             <div className="space-y-4">
               <p className="text-[11px] font-black text-medical-navy uppercase tracking-[0.3em]">
