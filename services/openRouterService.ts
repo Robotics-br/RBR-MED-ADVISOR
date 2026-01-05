@@ -584,7 +584,7 @@ export const runAllopathicDiagnosis = async (profile: PatientProfile, symptoms: 
     - Mínimo de 2 rounds, máximo de 4 rounds
     - Cada especialista deve ter no mínimo 2 falas
     - IMPORTANTE: No campo "speaker" da "conversation", use APENAS a especialidade (ex: "Cardiologia", "Endocrinologia") SEM nomes de médicos
-    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, você DEVE incluir na junta um "Patologista Clínica / Radiologista" para realizar a interpretação técnica desses dados específicos durante o debate.
+    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, você DEVE incluir na junta um "Patologista Clínica / Radiologista" para realizar a interpretação técnica desses dados específicos durante o debate. A junta DEVE analisar e debater obrigatoriamente estes exames para fundamentar o diagnóstico final.
     
     ---
     
@@ -704,7 +704,7 @@ export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms:
     - Mínimo de 2 rounds, máximo de 4 rounds
     - Cada especialista deve contribuir com no mínimo 2 falas
     - IMPORTANTE: No campo "speaker" da "conversation", use APENAS a especialidade (ex: "Homeopatia", "Medicina Tradicional Chinesa") SEM nomes/títulos de médicos
-    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, inclua um "Especialista em Diagnóstico Integrativo" focado em correlacionar os laudos laboratoriais/imagem com o terreno biológico do paciente.
+    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, inclua um "Especialista em Diagnóstico Integrativo" focado em correlacionar os laudos laboratoriais/imagem com o terreno biológico do paciente. O debate DEVE integrar estas evidências laboratoriais à visão holística de forma explícita.
     
     ---
     
@@ -795,21 +795,30 @@ export const analyzeClinicalExam = async (imageUrls: string[]): Promise<string> 
 
     const prompt = `
     Atue como um Especialista em Diagnóstico Complementar (Radiologia e Patologia Clínica).
-    Analise as imagens de exames clínicos fornecidas.
+    Analise os exames clínicos fornecidos.
     
     OBJETIVO:
-    Gerar um RELATÓRIO TÉCNICO PRELIMINAR para ser apresentado a uma JUNTA MÉDICA de especialistas.
+    Gerar um RELATÓRIO TÉCNICO ESTRUTURADO para o paciente e para a junta médica.
     
-    ESTRUTURA DO RELATÓRIO:
-    1. RESUMO DOS ACHADOS: Liste alterações laboratoriais (hemograma, bioquímica, hormônios) e/ou achados de imagem.
-    2. ALERTAS CRÍTICOS: Destaque valores que representam risco imediato ou alterações graves.
-    3. CORRELAÇÃO SUGERIDA: Indique brevemente como estes achados podem se relacionar com sintomas comuns (Ex: "Anemia microcítica sugere deficiência de ferro").
+    ESTRUTURA OBRIGATÓRIA (Use Markdown):
     
-    REGRAS:
-    - Linguagem técnica profissional com explicações entre parênteses para termos complexos.
+    ### 1. RESUMO DOS ACHADOS
+    (SEMPRE QUE POSSÍVEL, apresente resultados laboratoriais em uma TABELA MARKDOWN contendo: Parâmetro, Valor Encontrado, Referência e Status)
+    
+    ### 2. ALERTAS CRÍTICOS (Atenção ao que deve ser monitorado)
+    (Liste de forma destacada pontos que exigem acompanhamento imediato)
+    
+    ### 3. EXPLICAÇÃO TÉCNICO-CIENTÍFICA
+    (Explique a fisiopatologia por trás dos achados, citando o que representam clinicamente)
+    
+    ### 4. RECOMENDAÇÕES DE MONITORAMENTO
+    (SEMPRE QUE POSSÍVEL, use uma TABELA MARKDOWN para sugerir o cronograma de acompanhamento: Exame, Frequência Sugerida, Objetivo)
+    
+    REGRAS DE OURO:
+    - IMEDIATAMENTE após qualquer jargão técnico, coloque entre parênteses a tradução para leigos.
+    - Se o exame for de imagem, descreva os achados em tópicos claros se uma tabela não for aplicável.
+    - Linguagem profissional mas acolhedora.
     - Mantenha em Português (Brasil).
-    - Se houver múltiplos exames, organize por data ou tipo.
-    - Se a imagem for ilegível, solicite novo envio.
     `;
 
     try {

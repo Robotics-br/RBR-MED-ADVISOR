@@ -7,75 +7,70 @@
 
 ## 📋 Sobre o Projeto
 
-O **MedEvidência Pro** é uma ferramenta de inteligência médica desenhada para profissionais de saúde e pesquisadores. Utilizando o poder do **Google Gemini (IA Generativa)**, o sistema varre, consolida e analisa evidências clínicas de fontes globais de prestígio (JAMA, NEJM, The Lancet, Cochrane) cobrindo o período de 2000 a 2025.
+O **MedEvidência Pro** é uma ferramenta de inteligência médica desenhada para profissionais de saúde e pesquisadores. Utilizando o poder das tecnologias **Google Gemini e OpenRouter**, o sistema varre, consolida e analisa evidências clínicas globais, exames de imagem e laboratoriais, e interações medicamentosas complexas.
 
-O objetivo é fornecer insights rápidos e baseados em dados sobre a eficácia de tratamentos, novos ensaios clínicos e protocolos terapêuticos.
+O objetivo é fornecer insights rápidos e baseados em dados para suporte à decisão clínica, diagnósticos integrativos e validação de protocolos terapêuticos.
 
 ## 🚀 Funcionalidades Principais
 
-- **🔍 Descobrir Tratamentos:** Pesquisa avançada baseada em condições médicas (ex: "Alzheimer", "Artrite Reumatoide") para identificar os ensaios clínicos mais recentes e promissores.
-- **✅ Verificador de Eficácia:** Validação cruzada entre medicamentos/terapias e condições específicas para confirmar se há suporte científico robusto.
-- **📊 Análise Visual:** Gráficos interativos que mostram a eficácia estimada, número de participantes e relevância dos estudos encontrados.
-- **🧠 Explicações via IA:** O sistema gera explicações detalhadas em português, traduzindo "tecniquês" médico para protocolos práticos, pontos de atenção e perfis de pacientes indicados.
-- **🔗 Rastreabilidade:** Todos os dados são linkados diretamente às fontes originais para verificação.
-- **� Análise de Interações Medicamentosas:** Sistema de análise de segurança em duas etapas:
-  - **Farmacêutico Clínico:** Identifica interações medicamentosas, duplicidades terapêuticas e riscos farmacológicos.
-  - **Médico Sênior:** Valida clinicamente os achados e fornece um parecer médico consolidado.
-- **📑 Relatórios Profissionais em PDF:** Geração de documentos formais para impressão e discussão clínica, incluindo perfil do paciente, tabela de medicamentos, alertas de interação baseados em evidência e o parecer médico final.
+- **🔍 Descobrir Tratamentos:** Pesquisa avançada para identificar os ensaios clínicos mais recentes e promissores de fontes prestigiosas (JAMA, NEJM, Lancet).
+- **✅ Verificador de Eficácia:** Validação cruzada entre fármacos e condições específicas para confirmar o suporte científico.
+- **🧠 Junta Médica Virtual (IA):**
+  - **Alopática:** Debate entre especialistas (Cardiologistas, Endocrinologistas, etc.) para diagnóstico convencional fundamentado.
+  - **Homeopática/Integrativa:** Debate entre Homeopatas, especialistas em MTC e medicina bioenergética para visão holística.
+- **📄 Processamento de Exames (PDF/Imagem):**
+  - Upload de exames laboratoriais e laudos de imagem via clique ou **Drag & Drop**.
+  - Reconhecimento automático e análise técnica por IA.
+  - **Modal de Análise Detalhada:** Relatórios estruturados com tabelas comparativas de valores de referência e sugestões de monitoramento.
+- **📊 Análise de Interações Medicamentosas:** Sistema de segurança em duas etapas (Farmacêutico Clínico + Médico Sênior) para detectar riscos farmacológicos com explicações imediatas de jargões técnicos.
+- **📑 Relatórios Profissionais em PDF:** Geração de documentos formais que incluem o perfil completo do paciente, análise de exames, pareceres de juntas médicas e alertas de segurança.
+
+## 🛡️ Regras de Negócio e Segurança
+
+- **Identificação Mandatória:** Para garantir precisão diagnóstica, os campos Nome, Idade, Gênero, Peso e Altura (IMC) são obrigatórios para qualquer análise clínica.
+- **Linguagem Acolhedora:** Todo jargão técnico é automaticamente acompanhado por uma explicação em linguagem leiga entre parênteses.
+- **Privacidade Local:** O processamento de PDFs é realizado localmente no navegador via `pdfjs-dist` para máxima segurança.
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
 - **Estilização:** [Tailwind CSS](https://tailwindcss.com/)
 - **Inteligência Artificial:** 
-  - [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5/3.0 Models)
-  - **OpenRouter API** (Perplexity Sonar Online para pesquisa em tempo real, Modelos Clínicos para análise)
-- **Visualização de Dados:** [Recharts](https://recharts.org/)
-- **Utilitários:** jsPDF
+  - [Google Gemini 2.0 Flash](https://aistudio.google.com/) (Análise Clínica e Cognição)
+  - **OpenRouter API** (Integração de múltiplos modelos LLM)
+- **Visualização & Utilitários:** [Recharts](https://recharts.org/), [jsPDF](https://rawgit.com/MrRio/jsPDF/master/docs/index.html), [PDF.js](https://mozilla.github.io/pdf.js/)
 
 ## 📦 Instalação e Uso Local
 
-Siga os passos abaixo para rodar o projeto em sua máquina.
-
 ### Pré-requisitos
-
 - Node.js (v18 ou superior)
 - npm ou yarn
-- Chaves de API:
-  - [Google AI Studio](https://aistudio.google.com/)
-  - [OpenRouter](https://openrouter.ai/)
 
 ### Passo a Passo
-
 1. **Clone o repositório**
    ```bash
-   git clone https://github.com/seu-usuario/med-advisor.git
+   git clone https://github.com/Robotics-br/med-advisor.git
    cd med-advisor
    ```
-
 2. **Instale as dependências**
    ```bash
    npm install
    ```
-
 3. **Configuração de Ambiente**
-   Crie um arquivo `.env` ou `.env.local` na raiz do projeto. Adicione suas chaves:
+   Crie um arquivo `.env` na raiz do projeto:
    ```env
-   GEMINI_API_KEY=sua_chave_gemini_aqui
-   OPENROUTER_API_KEY=sua_chave_openrouter_aqui
+   OPENROUTER_API_KEY=sua_chave_aqui
+   SITE_URL=http://localhost:3000
+   SITE_NAME=MedAdvisor
    ```
-   > **Nota:** A aplicação utiliza um proxy no `vite.config.ts` para injetar essas variáveis com segurança. Certifique-se de usar os nomes exatos.
-
-4. **Execute o servidor de desenvolvimento**
+4. **Execute**
    ```bash
    npm run dev
    ```
-   O projeto estará disponível em `http://localhost:3000`.
 
 ## 🛡️ Aviso Legal
 
-O **MedEvidência Pro** é uma ferramenta de auxílio à pesquisa e **não substitui o julgamento clínico profissional**. Todas as informações devem ser verificadas nas fontes originais antes de qualquer decisão médica.
+O **MedEvidência Pro** é uma ferramenta de suporte à pesquisa e educação médica e **não substitui o julgamento clínico profissional**. Todas as condutas devem ser validadas por médicos devidamente registrados em seus conselhos de classe.
 
 ## 📄 Licença
-
-Este projeto é de uso privado/proprietário.
+Este projeto é de uso privado/proprietário da Robotics-BR.

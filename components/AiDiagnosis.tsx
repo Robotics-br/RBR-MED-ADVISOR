@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Medication, PatientProfile, Cid10Result, MedicationSuggestion, DiagnosisResult } from '../types';
 import { searchCid10, searchMedication, runAllopathicDiagnosis, runHomeopathicDiagnosis, analyzeClinicalExam } from '../services/openRouterService';
 import { DiagnosisModal } from './DiagnosisModal';
+import { ExamAnalysisModal } from './ExamAnalysisModal';
+import * as pdfjsLib from 'pdfjs-dist';
 
+// Configuração do worker do PDF.js utilizando arquivo local para evitar bloqueios de CORS
+// @ts-ignore
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 const commonDiseases = [
     "AVC", "Anemia Falciforme", "Apneia do Sono", "Arritmia", "Artrite/Artrose", "Asma",
     "Câncer", "Cirrose", "Demência", "Depressão", "Diabetes (tipo 1/2)", "Pré-Diabetes",
@@ -57,6 +62,8 @@ export const AiDiagnosis: React.FC = () => {
     const [showMedDropdown, setShowMedDropdown] = useState(false);
     const [searchingMed, setSearchingMed] = useState(false);
     const [analyzingExams, setAnalyzingExams] = useState(false);
+    const [examModalOpen, setExamModalOpen] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     // CID-10 para Comorbidades
     const [cidResults, setCidResults] = useState<Cid10Result[]>([]);
@@ -84,8 +91,8 @@ export const AiDiagnosis: React.FC = () => {
     };
 
     const getCompletionPercentage = () => {
-        const required = [profile.age, profile.gender, profile.weight, symptoms];
-        const optional = [profile.patientName, profile.bloodPressure, profile.allergies, profile.diseases];
+        const required = [profile.patientName, profile.age, profile.gender, profile.weight, profile.height, symptoms];
+        const optional = [profile.bloodPressure, profile.allergies, profile.diseases];
         const filled = [...required, ...optional].filter(f => f && f.toString().trim()).length;
         return Math.round((filled / (required.length + optional.length)) * 100);
     };
@@ -192,12 +199,12 @@ export const AiDiagnosis: React.FC = () => {
     };
 
     const handleAnalyze = async (type: 'ALLOPATHIC' | 'HOMEOPATHIC') => {
-        if (!profile.age || !profile.gender || !profile.weight) {
-            setError("Preencha: Idade, Gênero e Peso.");
+        if (!profile.patientName || !profile.age || !profile.gender || !profile.weight || !profile.height) {
+            setError("Preencha todos os campos da Identificação: Nome, Idade, Gênero, Peso e Altura.");
             return;
         }
         if (!symptoms.trim()) {
-            setError("Campo Sintomas é obrigatório.");
+            setError("O campo Sintomas é obrigatório.");
             return;
         }
         setLoading(true);
@@ -220,32 +227,88 @@ export const AiDiagnosis: React.FC = () => {
         }
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files) return;
+    const convertPdfToImages = async (file: File): Promise<string[]> => {
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            // @ts-ignore
+            const loadingTask = pdfjsLib.getDocument({
+                data: arrayBuffer,
+                useWorkerFetch: true,
+                isEvalSupported: false
+            });
+            const pdf = await loadingTask.promise;
+            const images: string[] = [];
 
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 }); // Escala balanceada para leitura e memória
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d', { alpha: false }); // Desativar alpha para performance
+
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                if (context) {
+                    context.fillStyle = "white"; // Fundo branco para garantir legibilidade
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // @ts-ignore
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport,
+                        intent: 'display'
+                    }).promise;
+
+                    images.push(canvas.toDataURL('image/jpeg', 0.8));
+                }
+                // Liberar memória da página
+                page.cleanup();
+            }
+            return images;
+        } catch (error) {
+            console.error("Erro interno no processamento do PDF:", error);
+            throw error;
+        }
+    };
+
+    const processFiles = async (files: FileList | File[]) => {
         setAnalyzingExams(true);
-        const newImages: string[] = [];
+        const processedImages: string[] = [];
 
         try {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                const reader = new FileReader();
-                const base64 = await new Promise<string>((resolve) => {
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                });
-                newImages.push(base64);
+                console.log(`Processando arquivo: ${file.name} (${file.type})`);
+
+                try {
+                    if (file.type === 'application/pdf') {
+                        const pdfImages = await convertPdfToImages(file);
+                        processedImages.push(...pdfImages);
+                    } else if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        const base64 = await new Promise<string>((resolve, reject) => {
+                            reader.onload = () => resolve(reader.result as string);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(file);
+                        });
+                        processedImages.push(base64);
+                    }
+                } catch (fileErr) {
+                    console.error(`Erro ao processar arquivo individual ${file.name}:`, fileErr);
+                }
             }
 
-            const updatedImages = [...(profile.examImages || []), ...newImages];
+            if (processedImages.length === 0) {
+                throw new Error("Nenhuma imagem válida foi extraída dos arquivos.");
+            }
+
+            const updatedImages = [...(profile.examImages || []), ...processedImages];
             setProfile(prev => ({
                 ...prev,
                 examImages: updatedImages
             }));
 
-            // Chamar a análise da IA para as novas imagens
-            const analysis = await analyzeClinicalExam(newImages);
+            const analysis = await analyzeClinicalExam(processedImages);
 
             setProfile(prev => ({
                 ...prev,
@@ -256,10 +319,32 @@ export const AiDiagnosis: React.FC = () => {
 
         } catch (err) {
             console.error(err);
-            setError("Erro ao processar as imagens dos exames.");
+            setError("Erro ao processar os arquivos dos exames (Imagens/PDF).");
         } finally {
             setAnalyzingExams(false);
         }
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files) processFiles(files);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        if (files) processFiles(files);
     };
 
     const removeExamImage = (index: number) => {
@@ -301,11 +386,11 @@ export const AiDiagnosis: React.FC = () => {
                     <SectionHeader number="1" title="Identificação do Paciente" isOpen={expandedSections.identification} toggle={() => toggleSection('identification')} color="blue" />
                     {expandedSections.identification && (
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Nome Completo</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.patientName} onChange={e => setProfile({ ...profile, patientName: e.target.value })} placeholder="Nome do paciente" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Nome Completo *</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.patientName} onChange={e => setProfile({ ...profile, patientName: e.target.value })} placeholder="Nome do paciente" /></div>
                             <div><label className="block text-xs font-bold text-slate-500 mb-2">Idade *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.age} onChange={e => setProfile({ ...profile, age: e.target.value })} placeholder="Ex: 45" /></div>
                             <div><label className="block text-xs font-bold text-slate-500 mb-2">Gênero *</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.gender} onChange={e => setProfile({ ...profile, gender: e.target.value })}><option value="">Selecione...</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option><option value="Outro">Outro</option></select></div>
                             <div><label className="block text-xs font-bold text-slate-500 mb-2">Peso (kg) *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.weight} onChange={e => setProfile({ ...profile, weight: e.target.value })} placeholder="Ex: 70" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Altura (cm)</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.height} onChange={e => setProfile({ ...profile, height: e.target.value })} placeholder="Ex: 170" /></div>
+                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Altura (cm) *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.height} onChange={e => setProfile({ ...profile, height: e.target.value })} placeholder="Ex: 170" /></div>
                             {calculateIMC() && <div className="md:col-span-2 bg-blue-50 p-4 rounded-xl"><p className="text-sm font-bold text-blue-900">IMC Calculado: <span className="text-2xl">{calculateIMC()}</span></p></div>}
                         </div>
                     )}
@@ -564,16 +649,21 @@ export const AiDiagnosis: React.FC = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
-                                            <span className="text-xs font-bold text-indigo-600">Usar Câmera</span>
+                                            <span className="text-xs font-bold text-indigo-600 text-center">Usar Câmera / Foto</span>
                                             <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} />
                                         </label>
 
-                                        <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-indigo-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-400 transition-all cursor-pointer group">
-                                            <svg className="w-8 h-8 text-indigo-400 group-hover:text-indigo-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <label
+                                            className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-2xl transition-all cursor-pointer group ${isDragging ? 'border-indigo-500 bg-indigo-100 scale-[1.02]' : 'border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400'}`}
+                                            onDragOver={handleDragOver}
+                                            onDragLeave={handleDragLeave}
+                                            onDrop={handleDrop}
+                                        >
+                                            <svg className={`w-8 h-8 group-hover:text-indigo-600 mb-2 transition-colors ${isDragging ? 'text-indigo-600 animate-bounce' : 'text-indigo-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                             </svg>
-                                            <span className="text-xs font-bold text-indigo-600">Escolher Arquivo</span>
-                                            <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileUpload} />
+                                            <span className="text-xs font-bold text-indigo-600 text-center">{isDragging ? 'Solte para Iniciar' : 'Arquivo (PDF ou Imagem)'}</span>
+                                            <input type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={handleFileUpload} />
                                         </label>
                                     </div>
                                 </div>
@@ -631,13 +721,34 @@ export const AiDiagnosis: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <textarea
-                                        className="w-full h-32 p-4 bg-white/50 border border-indigo-200 rounded-xl text-sm text-slate-700 focus:bg-white outline-none transition-all"
-                                        placeholder="O resultado da análise automática aparecerá aqui. Você também pode digitar detalhes adicionais sobre o exame..."
-                                        value={profile.examAnalysis}
-                                        onChange={e => setProfile({ ...profile, examAnalysis: e.target.value })}
-                                    />
-                                    <p className="mt-2 text-[10px] text-indigo-400 font-medium">A IA identificará alterações nos exames laboratoriais ou de imagem para enriquecer o diagnóstico.</p>
+                                    {profile.examAnalysis ? (
+                                        <div className="bg-white p-6 rounded-2xl border border-indigo-200 relative group/analysis shadow-sm">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                                    Relatório Prévio
+                                                </h4>
+                                                <button
+                                                    onClick={() => setExamModalOpen(true)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all shadow-md active:scale-95"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                    Explicação Detalhada
+                                                </button>
+                                            </div>
+                                            <div className="prose prose-slate max-w-none text-slate-600 text-sm leading-relaxed line-clamp-3">
+                                                <div dangerouslySetInnerHTML={{ __html: profile.examAnalysis.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-slate-100">
+                                                <p className="text-[9px] text-indigo-400 font-medium italic">Clique em "Explicação Detalhada" para ver o laudo completo e o que monitorar.</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 border-2 border-dashed border-indigo-100 rounded-2xl flex flex-col items-center justify-center text-center bg-white/50">
+                                            <svg className="w-10 h-10 text-indigo-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                            <p className="text-sm text-slate-400 font-medium">Os resultados da análise automática aparecerão aqui após o upload.</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -658,6 +769,12 @@ export const AiDiagnosis: React.FC = () => {
             </div>
 
             <DiagnosisModal isOpen={modalOpen} onClose={() => setModalOpen(false)} data={diagnosisData} loading={loading} profile={profile} symptoms={symptoms} />
+
+            <ExamAnalysisModal
+                isOpen={examModalOpen}
+                onClose={() => setExamModalOpen(false)}
+                analysis={profile.examAnalysis || ''}
+            />
         </div>
     );
 };
