@@ -54,7 +54,7 @@ export const ExamChecklist: React.FC<ExamChecklistProps> = ({ studies, onSelect 
 
                             <div className="pt-6 border-t border-violet-200/40 space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest truncate max-w-[150px]">
+                                    <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest truncate max-w-[150px]">
                                         {study.fonte_origem}
                                     </span>
                                     {study.jamaLink && (

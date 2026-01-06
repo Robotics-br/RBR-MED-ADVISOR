@@ -75,7 +75,7 @@ export const TruthMyth: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Campo Fármaco */}
                     <div className="space-y-3 relative">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">
+                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] ml-1">
                             Qual o medicamento?
                         </label>
                         <div className="relative">
@@ -115,7 +115,7 @@ export const TruthMyth: React.FC = () => {
 
                     {/* Campo Finalidade */}
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">
+                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] ml-1">
                             Para qual finalidade?
                         </label>
                         <input

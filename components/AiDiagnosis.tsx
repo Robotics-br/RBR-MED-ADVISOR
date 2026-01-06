@@ -375,7 +375,7 @@ export const AiDiagnosis: React.FC = () => {
                 <div className="mt-6 max-w-2xl mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full h-3 overflow-hidden">
                     <div className="bg-white h-full transition-all duration-500" style={{ width: `${100 - getCompletionPercentage()}%` }} />
                 </div>
-                <p className="text-xs font-bold text-slate-400 mt-2">{getCompletionPercentage()}% Preenchido</p>
+                <p className="text-xs font-bold text-slate-600 mt-2">{getCompletionPercentage()}% Preenchido</p>
             </div>
 
             {error && <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center text-red-600 font-bold">{error}</div>}
@@ -386,11 +386,11 @@ export const AiDiagnosis: React.FC = () => {
                     <SectionHeader number="1" title="Identificação do Paciente" isOpen={expandedSections.identification} toggle={() => toggleSection('identification')} color="blue" />
                     {expandedSections.identification && (
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Nome Completo *</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.patientName} onChange={e => setProfile({ ...profile, patientName: e.target.value })} placeholder="Nome do paciente" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Idade *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.age} onChange={e => setProfile({ ...profile, age: e.target.value })} placeholder="Ex: 45" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Gênero *</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.gender} onChange={e => setProfile({ ...profile, gender: e.target.value })}><option value="">Selecione...</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option><option value="Outro">Outro</option></select></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Peso (kg) *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.weight} onChange={e => setProfile({ ...profile, weight: e.target.value })} placeholder="Ex: 70" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Altura (cm) *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.height} onChange={e => setProfile({ ...profile, height: e.target.value })} placeholder="Ex: 170" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Nome Completo *</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.patientName} onChange={e => setProfile({ ...profile, patientName: e.target.value })} placeholder="Nome do paciente" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Idade *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.age} onChange={e => setProfile({ ...profile, age: e.target.value })} placeholder="Ex: 45" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Gênero *</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.gender} onChange={e => setProfile({ ...profile, gender: e.target.value })}><option value="">Selecione...</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option><option value="Outro">Outro</option></select></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Peso (kg) *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.weight} onChange={e => setProfile({ ...profile, weight: e.target.value })} placeholder="Ex: 70" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Altura (cm) *</label><input type="number" className="w-full px-4 py-3 border rounded-xl" value={profile.height} onChange={e => setProfile({ ...profile, height: e.target.value })} placeholder="Ex: 170" /></div>
                             {calculateIMC() && <div className="md:col-span-2 bg-blue-50 p-4 rounded-xl"><p className="text-sm font-bold text-blue-900">IMC Calculado: <span className="text-2xl">{calculateIMC()}</span></p></div>}
                         </div>
                     )}
@@ -401,10 +401,10 @@ export const AiDiagnosis: React.FC = () => {
                     <SectionHeader number="2" title="Sinais Vitais" isOpen={expandedSections.vitals} toggle={() => toggleSection('vitals')} color="red" />
                     {expandedSections.vitals && (
                         <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">PA (mmHg)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.bloodPressure} onChange={e => setProfile({ ...profile, bloodPressure: e.target.value })} placeholder="120/80" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">FC (bpm)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.heartRate} onChange={e => setProfile({ ...profile, heartRate: e.target.value })} placeholder="72" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Temp (°C)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.temperature} onChange={e => setProfile({ ...profile, temperature: e.target.value })} placeholder="36.5" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">SpO2 (%)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.oxygenSaturation} onChange={e => setProfile({ ...profile, oxygenSaturation: e.target.value })} placeholder="98" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">PA (mmHg)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.bloodPressure} onChange={e => setProfile({ ...profile, bloodPressure: e.target.value })} placeholder="120/80" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">FC (bpm)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.heartRate} onChange={e => setProfile({ ...profile, heartRate: e.target.value })} placeholder="72" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Temp (°C)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.temperature} onChange={e => setProfile({ ...profile, temperature: e.target.value })} placeholder="36.5" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">SpO2 (%)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.oxygenSaturation} onChange={e => setProfile({ ...profile, oxygenSaturation: e.target.value })} placeholder="98" /></div>
                         </div>
                     )}
                 </div>
@@ -414,13 +414,13 @@ export const AiDiagnosis: React.FC = () => {
                     <SectionHeader number="3" title="Histórico Médico" isOpen={expandedSections.history} toggle={() => toggleSection('history')} color="purple" />
                     {expandedSections.history && (
                         <div className="p-6 space-y-4">
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Alergias (Medicamentosas/Alimentares)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.allergies} onChange={e => setProfile({ ...profile, allergies: e.target.value })} placeholder="Ex: Penicilina, camarão" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Comorbidades</label>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Alergias (Medicamentosas/Alimentares)</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.allergies} onChange={e => setProfile({ ...profile, allergies: e.target.value })} placeholder="Ex: Penicilina, camarão" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Comorbidades</label>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-4 border rounded-xl max-h-60 overflow-y-auto">
                                     {commonDiseases.map(d => (<label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-slate-50 p-2 rounded"><input type="checkbox" checked={selectedDiseases.includes(d)} onChange={() => setSelectedDiseases(p => p.includes(d) ? p.filter(x => x !== d) : [...p, d])} className="rounded" /><span>{d}</span></label>))}
                                 </div>
                                 <div className="mt-4">
-                                    <label className="block text-xs font-bold text-slate-500 mb-2">Adicionar Outro CID-10</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-2">Adicionar Outro CID-10</label>
                                     <div className="relative">
                                         <input
                                             type="text"
@@ -469,8 +469,8 @@ export const AiDiagnosis: React.FC = () => {
                                     )}
                                 </div>
                             </div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Cirurgias Prévias</label><textarea className="w-full px-4 py-3 border rounded-xl" rows={2} value={profile.previousSurgeries} onChange={e => setProfile({ ...profile, previousSurgeries: e.target.value })} placeholder="Ex: Apendicectomia (2015)" /></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">História Familiar</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.familyHistory} onChange={e => setProfile({ ...profile, familyHistory: e.target.value })} placeholder="Ex: Pai - HAS, Mãe - Diabetes" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Cirurgias Prévias</label><textarea className="w-full px-4 py-3 border rounded-xl" rows={2} value={profile.previousSurgeries} onChange={e => setProfile({ ...profile, previousSurgeries: e.target.value })} placeholder="Ex: Apendicectomia (2015)" /></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">História Familiar</label><input type="text" className="w-full px-4 py-3 border rounded-xl" value={profile.familyHistory} onChange={e => setProfile({ ...profile, familyHistory: e.target.value })} placeholder="Ex: Pai - HAS, Mãe - Diabetes" /></div>
                         </div>
                     )}
                 </div>
@@ -480,9 +480,9 @@ export const AiDiagnosis: React.FC = () => {
                     <SectionHeader number="4" title="Hábitos de Vida" isOpen={expandedSections.habits} toggle={() => toggleSection('habits')} color="green" />
                     {expandedSections.habits && (
                         <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Tabagismo</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.smoking} onChange={e => setProfile({ ...profile, smoking: e.target.value as any })}><option value="Não">Não fumante</option><option value="Ex-fumante">Ex-fumante</option><option value="Fumante (< 10 cigarros/dia)">{'< 10 cig/dia'}</option><option value="Fumante (> 10 cigarros/dia)">{'> 10 cig/dia'}</option></select></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Etilismo</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.alcohol} onChange={e => setProfile({ ...profile, alcohol: e.target.value as any })}><option value="Não consome">Não consome</option><option value="Social">Social</option><option value="Frequente">Frequente</option><option value="Diário">Diário</option></select></div>
-                            <div><label className="block text-xs font-bold text-slate-500 mb-2">Atividade Física</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.physicalActivity} onChange={e => setProfile({ ...profile, physicalActivity: e.target.value as any })}><option value="Sedentário">Sedentário</option><option value="Leve (1-2x/sem)">Leve (1-2x/sem)</option><option value="Moderado (3-4x/sem)">Moderado (3-4x/sem)</option><option value="Intenso (5+x/sem)">Intenso (5+x/sem)</option></select></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Tabagismo</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.smoking} onChange={e => setProfile({ ...profile, smoking: e.target.value as any })}><option value="Não">Não fumante</option><option value="Ex-fumante">Ex-fumante</option><option value="Fumante (< 10 cigarros/dia)">{'< 10 cig/dia'}</option><option value="Fumante (> 10 cigarros/dia)">{'> 10 cig/dia'}</option></select></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Etilismo</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.alcohol} onChange={e => setProfile({ ...profile, alcohol: e.target.value as any })}><option value="Não consome">Não consome</option><option value="Social">Social</option><option value="Frequente">Frequente</option><option value="Diário">Diário</option></select></div>
+                            <div><label className="block text-xs font-bold text-slate-700 mb-2">Atividade Física</label><select className="w-full px-4 py-3 border rounded-xl" value={profile.physicalActivity} onChange={e => setProfile({ ...profile, physicalActivity: e.target.value as any })}><option value="Sedentário">Sedentário</option><option value="Leve (1-2x/sem)">Leve (1-2x/sem)</option><option value="Moderado (3-4x/sem)">Moderado (3-4x/sem)</option><option value="Intenso (5+x/sem)">Intenso (5+x/sem)</option></select></div>
                             {profile.gender === 'Feminino' && (
                                 <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-pink-50 rounded-xl">
                                     <label className="flex items-center gap-2"><input type="checkbox" checked={profile.isPregnant} onChange={e => setProfile({ ...profile, isPregnant: e.target.checked })} /><span className="text-sm font-bold">Gestante</span></label>
@@ -554,7 +554,7 @@ export const AiDiagnosis: React.FC = () => {
                                     <div className="flex gap-2"><button onClick={() => setCurrentMed({ ...currentMed, usageType: 'CONTINUOUS' })} className={`flex-1 py-3 rounded-xl text-xs font-bold ${currentMed.usageType === 'CONTINUOUS' ? 'bg-emerald-500 text-white' : 'bg-white border'}`}>Contínuo</button><button onClick={() => setCurrentMed({ ...currentMed, usageType: 'SOS' })} className={`flex-1 py-3 rounded-xl text-xs font-bold ${currentMed.usageType === 'SOS' ? 'bg-orange-500 text-white' : 'bg-white border'}`}>SOS</button></div>
                                 </div>
                                 <div className="relative">
-                                    <label className="block text-xs font-bold text-slate-500 mb-2">Motivo / Indicação Clínica (CID-10)</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-2">Motivo / Indicação Clínica (CID-10)</label>
                                     <input
                                         type="text"
                                         className="w-full px-4 py-3 border border-emerald-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
@@ -685,7 +685,7 @@ export const AiDiagnosis: React.FC = () => {
                                             ))
                                         ) : (
                                             <div className="col-span-3 flex items-center justify-center h-full">
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nenhum anexo</p>
+                                                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Nenhum anexo</p>
                                             </div>
                                         )}
                                     </div>
@@ -746,7 +746,7 @@ export const AiDiagnosis: React.FC = () => {
                                     ) : (
                                         <div className="p-8 border-2 border-dashed border-indigo-100 rounded-2xl flex flex-col items-center justify-center text-center bg-white/50">
                                             <svg className="w-10 h-10 text-indigo-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                            <p className="text-sm text-slate-400 font-medium">Os resultados da análise automática aparecerão aqui após o upload.</p>
+                                            <p className="text-sm text-slate-600 font-medium">Os resultados da análise automática aparecerão aqui após o upload.</p>
                                         </div>
                                     )}
                                 </div>

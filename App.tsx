@@ -6,7 +6,7 @@ import { VisualAnalysis } from './components/VisualAnalysis';
 import { StudyDetailsModal } from './components/StudyDetailsModal';
 import { SourceRelevance } from './components/SourceRelevance';
 import { ExamChecklist } from './components/ExamChecklist';
-import { searchMedicalTrials, verifyMedicationEfficacy, explainStudy, searchCid10, searchMedication, runTreatmentBoardAnalysis } from './services/openRouterService';
+import { searchMedicalTrials, explainStudy, searchCid10, searchMedication, runTreatmentBoardAnalysis } from './services/openRouterService';
 import { ResearchResponse, StudyResult, StudyExplanation, Cid10Result, MedicationSuggestion, DiagnosisResult } from './types';
 
 import { DrugInteraction } from './components/DrugInteraction';
@@ -15,7 +15,7 @@ import { TruthMyth } from './components/TruthMyth';
 import { DiagnosisModal } from './components/DiagnosisModal';
 import { Login } from './components/Login';
 
-type SearchMode = 'discover' | 'verify' | 'interactions' | 'diagnosis' | 'truth_myth';
+type SearchMode = 'discover' | 'interactions' | 'diagnosis' | 'truth_myth';
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -140,21 +140,6 @@ const App: React.FC = () => {
     setMedResults([]);
   };
 
-  /* ... (rest of the file remains unchanged until loading UI block) ... */
-
-  {
-    loading && (
-      <div className="flex flex-col items-center justify-center py-24 animate-fade-in">
-        <div className="relative w-20 h-20 mb-8">
-          <div className="absolute inset-0 border-4 border-brand-100 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-brand-500 rounded-full border-t-transparent animate-spin"></div>
-        </div>
-        <p className="text-brand-600 font-bold text-lg animate-pulse text-center">{searchStatus}</p>
-        <p className="text-slate-400 text-xs mt-2 font-medium uppercase tracking-widest">Varredura em Tempo Real</p>
-      </div>
-    )
-  }
-
   const handleSearch = useCallback(async (arg1?: 'ALLOPATHIC' | 'HOMEOPATHIC' | React.FormEvent, arg2?: React.FormEvent) => {
     let event: React.FormEvent | undefined;
     let boardType: 'ALLOPATHIC' | 'HOMEOPATHIC' | undefined;
@@ -168,7 +153,6 @@ const App: React.FC = () => {
 
     if (event?.preventDefault) event.preventDefault();
     if (!query.trim()) return;
-    if (activeMode === 'verify' && !medicationQuery.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -178,14 +162,12 @@ const App: React.FC = () => {
     try {
       if (boardType) {
         setIsBoardModalOpen(true);
-        const result = await runTreatmentBoardAnalysis(query, activeMode === 'verify' ? medicationQuery : null, boardType);
+        const result = await runTreatmentBoardAnalysis(query, null, boardType);
         setBoardResult(result);
       } else {
         let result;
         if (activeMode === 'discover') {
           result = await searchMedicalTrials(query);
-        } else if (activeMode === 'verify') {
-          result = await verifyMedicationEfficacy(query, medicationQuery);
         }
         if (result) setData(result);
       }
@@ -248,14 +230,6 @@ const App: React.FC = () => {
             color: 'teal'
           },
           {
-            id: 'verify',
-            title: 'Validação',
-            subtitle: 'Eficácia',
-            desc: 'Escaneamento de evidências científicas e validação.',
-            icon: '⚖️',
-            color: 'brand'
-          },
-          {
             id: 'interactions',
             title: 'Segurança',
             subtitle: 'Interações',
@@ -290,7 +264,7 @@ const App: React.FC = () => {
             </div>
 
             <div className="space-y-1 mb-6 flex-grow">
-              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 group-hover:text-brand-500 transition-colors block mb-2">{item.title}</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 group-hover:text-brand-500 transition-colors block mb-2">{item.title}</span>
               <h3 className="text-xl font-bold text-medical-navy">{item.subtitle}</h3>
               <p className="text-slate-500 text-xs leading-relaxed mt-4 opacity-80">
                 {item.desc}
@@ -319,9 +293,9 @@ const App: React.FC = () => {
               <div className="mb-12">
                 <h2 className="text-4xl sm:text-6xl font-display font-black text-medical-navy mb-6 tracking-tight">
                   {activeMode === 'discover' && <span className="text-teal-600">Tratamentos & Terapias</span>}
-                  {activeMode === 'verify' && <span className="text-brand-500">Validação de Eficácia</span>}
                   {activeMode === 'interactions' && <span className="text-slate-700">Segurança & Interações</span>}
                   {activeMode === 'diagnosis' && <span className="text-violet-600">Assistente Diagnóstico</span>}
+                  {activeMode === 'truth_myth' && <span className="text-orange-600">Análise Verdade/Mito</span>}
                 </h2>
                 <div className="flex justify-center gap-3">
                   <div className="h-1.5 w-12 bg-slate-200 rounded-full"></div>
@@ -333,16 +307,16 @@ const App: React.FC = () => {
               {/* Advanced Tabs */}
               <div className="flex justify-center mb-20 overflow-hidden">
                 <div className="bg-slate-100/50 p-2 rounded-[1.5rem] flex flex-wrap justify-center border border-slate-200/50 backdrop-blur-sm gap-2">
-                  {['discover', 'verify', 'interactions', 'diagnosis', 'truth_myth'].map((mode) => (
+                  {['discover', 'interactions', 'diagnosis', 'truth_myth'].map((mode) => (
                     <button
                       key={mode}
                       onClick={() => { setActiveMode(mode as SearchMode); setData(null); setError(null); setQuery(''); setMedicationQuery(''); }}
                       className={`px-8 sm:px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeMode === mode
                         ? 'bg-white text-medical-navy shadow-premium'
-                        : 'text-slate-400 hover:text-slate-600'
+                        : 'text-slate-600 hover:text-slate-800'
                         }`}
                     >
-                      {mode === 'discover' ? 'Tratamentos' : mode === 'verify' ? 'Eficácia' : mode === 'interactions' ? 'Segurança' : mode === 'diagnosis' ? 'Diagnóstico' : 'Verdade/Mito'}
+                      {mode === 'discover' ? 'Tratamentos' : mode === 'interactions' ? 'Segurança' : mode === 'diagnosis' ? 'Diagnóstico' : 'Verdade/Mito'}
                     </button>
                   ))}
                 </div>
@@ -360,7 +334,7 @@ const App: React.FC = () => {
                     <div className="space-y-8">
                       {/* Diagnostic Field */}
                       <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">
+                        <label className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] ml-1">
                           Diagnóstico ou Condição Clínicas
                         </label>
                         <div className="relative group">
@@ -382,7 +356,7 @@ const App: React.FC = () => {
                         </div>
 
                         {showCidDropdown && (
-                          <div className="absolute z-[100] w-full mt-3 bg-white border border-slate-100 rounded-3xl shadow-premium max-h-80 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                          <div className="absolute z-[100] w-full mt-3 bg-white border border-slate-100 rounded-3xl shadow-premium max-h-80 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-4 duration-200">
                             {cidResults.map((cid, i) => (
                               <button
                                 key={i}
@@ -397,55 +371,13 @@ const App: React.FC = () => {
                           </div>
                         )}
                       </div>
-
-                      {/* Medication Field (for Verify mode) */}
-                      {activeMode === 'verify' && (
-                        <div className="space-y-3 animate-fade-in relative z-20">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">
-                            Fármaco em Validação
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={medicationQuery}
-                              onChange={(e) => handleMedSearch(e.target.value)}
-                              onFocus={() => { if (medicationQuery.length >= 2) setShowMedDropdown(true); }}
-                              onBlur={() => setTimeout(() => setShowMedDropdown(false), 200)}
-                              placeholder="Ex: Adalimumabe..."
-                              className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-0 focus:border-brand-500 focus:bg-white transition-all text-xl font-bold text-medical-navy placeholder:text-slate-300 outline-none"
-                              disabled={loading}
-                            />
-                            {searchingMed && (
-                              <div className="absolute right-8 top-1/2 -translate-y-1/2">
-                                <div className="animate-spin h-6 w-6 border-2 border-brand-500 border-t-transparent rounded-full"></div>
-                              </div>
-                            )}
-                          </div>
-
-                          {showMedDropdown && (
-                            <div className="absolute z-[100] w-full mt-3 bg-white border border-slate-100 rounded-3xl shadow-premium max-h-80 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                              {medResults.map((med, i) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={() => selectMed(med)}
-                                  className="w-full text-left px-8 py-5 hover:bg-slate-50 border-b border-slate-50 last:border-0 flex flex-col gap-1 transition-colors"
-                                >
-                                  <span className="text-lg text-medical-navy font-bold leading-tight">{med.nome}</span>
-                                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{med.principioAtivo}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4">
                       <button
                         type="button"
                         onClick={(e) => handleSearch('ALLOPATHIC', e)}
-                        disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
+                        disabled={loading || !query.trim()}
                         className="flex-1 flex items-center justify-center px-6 py-7 bg-medical-navy text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-brand-600 transition-all duration-500 shadow-xl disabled:opacity-20 group/btn relative overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
@@ -454,7 +386,7 @@ const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={(e) => handleSearch('HOMEOPATHIC', e)}
-                        disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
+                        disabled={loading || !query.trim()}
                         className="flex-1 flex items-center justify-center px-6 py-7 bg-teal-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-teal-700 transition-all duration-500 shadow-xl disabled:opacity-20 group/btn relative overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-teal-700 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
@@ -463,8 +395,8 @@ const App: React.FC = () => {
                     </div>
                     <button
                       type="submit"
-                      disabled={loading || !query.trim() || (activeMode === 'verify' && !medicationQuery.trim())}
-                      className="w-full text-center py-4 text-slate-400 font-black text-[9px] uppercase tracking-[0.3em] hover:text-brand-500 transition-colors"
+                      disabled={loading || !query.trim()}
+                      className="w-full text-center py-4 text-slate-600 font-black text-[9px] uppercase tracking-[0.3em] hover:text-brand-500 transition-colors"
                     >
                       Ou realizar Busca por Estudos Rápidos
                     </button>
@@ -485,7 +417,7 @@ const App: React.FC = () => {
                   <div className="absolute inset-4 border-2 border-teal-500/20 rounded-full animate-pulse"></div>
                 </div>
                 <p className="text-medical-navy font-black text-sm uppercase tracking-[0.4em] animate-pulse text-center">{searchStatus}</p>
-                <span className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Varredura Global em Tempo Real</span>
+                <span className="mt-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Varredura Global em Tempo Real</span>
               </div>
             )}
 
@@ -515,18 +447,18 @@ const App: React.FC = () => {
                       <h3 className="text-4xl font-display font-black text-medical-navy tracking-tight">
                         {activeMode === 'discover' ? "Terapias Estruturadas" : "Resultados da Validação"}
                       </h3>
-                      <p className="text-slate-400 mt-2 font-medium">Intervenções terapêuticas classificadas por relevância.</p>
+                      <p className="text-slate-600 mt-2 font-medium">Intervenções terapêuticas classificadas por relevância.</p>
                     </div>
                   </div>
 
-                  <div className={`grid gap-10 ${activeMode === 'verify' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {data.studies.filter(s => s.type !== 'DIAGNOSIS').map((study, idx) => (
                       <StudyCard
                         key={idx}
                         study={study}
                         index={idx}
                         onSelect={handleSelectStudy}
-                        isWide={activeMode === 'verify'}
+                        isWide={false}
                       />
                     ))}
                   </div>
@@ -554,9 +486,9 @@ const App: React.FC = () => {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                           </div>
                           <span className="text-medical-navy font-black text-sm mb-2 truncate group-hover:text-brand-700 transition-colors">
-                            {source.title || 'Referência Excluisva'}
+                            {source.title || 'Referência Exclusiva'}
                           </span>
-                          <span className="text-[10px] text-slate-400 font-medium truncate opacity-60 group-hover:opacity-100">
+                          <span className="text-[10px] text-slate-600 font-medium truncate opacity-60 group-hover:opacity-100">
                             {source.uri}
                           </span>
                         </a>
@@ -620,12 +552,13 @@ const App: React.FC = () => {
         .tracking-tight { letter-spacing: -0.025em; }
         .shadow-premium { box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.1); }
       `}</style>
+
       <DiagnosisModal
         isOpen={isBoardModalOpen}
         onClose={() => setIsBoardModalOpen(false)}
         data={boardResult}
         loading={loading}
-        title={activeMode === 'verify' ? "Validação de Eficácia por Junta Médica" : "Análise Terapêutica por Junta Médica"}
+        title="Análise Terapêutica por Junta Médica"
       />
     </div>
   );

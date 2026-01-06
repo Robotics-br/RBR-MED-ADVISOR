@@ -90,7 +90,7 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                             {/* 1. Medical Board Members */}
                             <section>
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="flex items-center text-xs font-black text-slate-400 uppercase tracking-[0.2em] gap-2">
+                                    <h3 className="flex items-center text-xs font-black text-slate-600 uppercase tracking-[0.2em] gap-2">
                                         <span className="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
                                         Especialistas Convocados
                                     </h3>

@@ -14,7 +14,6 @@ O objetivo é fornecer insights rápidos e baseados em dados para suporte à dec
 ## 🚀 Funcionalidades Principais
 
 - **🔍 Descobrir Tratamentos:** Pesquisa avançada para identificar os ensaios clínicos mais recentes e promissores de fontes prestigiosas (JAMA, NEJM, Lancet).
-- **✅ Verificador de Eficácia:** Validação cruzada entre fármacos e condições específicas para confirmar o suporte científico.
 - **🧠 Junta Médica Virtual (IA):**
   - **Alopática:** Debate entre especialistas (Cardiologistas, Endocrinologistas, etc.) para diagnóstico convencional fundamentado.
   - **Homeopática/Integrativa:** Debate entre Homeopatas, especialistas em MTC e medicina bioenergética para visão holística.

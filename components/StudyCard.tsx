@@ -77,7 +77,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
             <h3 className={`font-black text-medical-navy group-hover:text-brand-500 transition-colors leading-tight mb-4 tracking-tight ${isWide ? 'text-4xl' : 'text-2xl line-clamp-2 min-h-[4rem]'}`}>
               {study.therapyName}
             </h3>
-            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.2em] line-clamp-1 opacity-60 leading-none">{study.studyTitle}</p>
+            <p className="text-[11px] text-slate-600 font-bold uppercase tracking-[0.2em] line-clamp-1 opacity-60 leading-none">{study.studyTitle}</p>
           </div>
         </div>
 
@@ -95,7 +95,7 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
       <div className={`bg-slate-50/30 flex flex-col justify-center px-10 py-10 transition-colors duration-500 group-hover:bg-slate-50/60 ${isWide ? 'md:w-1/3 md:border-l border-slate-100' : 'border-t border-slate-100'}`}>
         <div className={`flex gap-10 mb-10 ${isWide ? 'flex-col items-center text-center' : 'justify-between'}`}>
           <div title={study.type === 'DIAGNOSIS' ? "Acurácia / Sensibilidade" : "Eficácia Estimada"} className="flex flex-col items-center">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2 leading-none">
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-2 leading-none">
               {study.type === 'DIAGNOSIS' ? 'Rigor Analítico' : 'Eficácia Clínica'}
             </span>
             <span className="text-3xl font-black text-medical-navy flex items-center gap-2">
@@ -104,10 +104,10 @@ export const StudyCard: React.FC<StudyCardProps> = ({ study, index, onSelect, is
             </span>
           </div>
           <div title="Participantes" className="flex flex-col items-center">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2 leading-none">Amostra</span>
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-2 leading-none">Amostra</span>
             <span className="text-3xl font-black text-medical-navy">
               {study.participants > 0 ? study.participants : 'N/A'}
-              <span className="text-sm ml-1 text-slate-300">PTS</span>
+              <span className="text-sm ml-1 text-slate-500">PTS</span>
             </span>
           </div>
         </div>

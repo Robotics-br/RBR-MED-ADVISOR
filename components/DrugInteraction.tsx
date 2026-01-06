@@ -286,7 +286,7 @@ export const DrugInteraction: React.FC = () => {
                             </h3>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Idade</label>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Idade</label>
                                     <input
                                         type="text"
                                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
@@ -296,7 +296,7 @@ export const DrugInteraction: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Gênero</label>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Gênero</label>
                                     <select
                                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                                         value={profile.gender}
@@ -309,7 +309,7 @@ export const DrugInteraction: React.FC = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Peso (kg)</label>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Peso (kg)</label>
                                     <input
                                         type="text"
                                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
@@ -328,7 +328,7 @@ export const DrugInteraction: React.FC = () => {
                             </h3>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-left">Principais Comorbidades</label>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 text-left">Principais Comorbidades</label>
                                     <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar border border-slate-100 p-2 rounded-xl bg-slate-50 text-left">
                                         {commonDiseases.map(disease => (
                                             <label key={disease} className="flex items-start space-x-2 cursor-pointer p-2 rounded hover:bg-white hover:shadow-sm transition-all">
@@ -343,7 +343,7 @@ export const DrugInteraction: React.FC = () => {
                                         ))}
                                     </div>
                                     <div className="mt-3">
-                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Outras Comorbidades (Opcional)</label>
+                                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Outras Comorbidades (Opcional)</label>
                                         <div className="flex gap-2 mb-3">
                                             <input
                                                 type="text"
@@ -392,7 +392,7 @@ export const DrugInteraction: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Suplementos e Outras Substâncias</label>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Suplementos e Outras Substâncias</label>
                                     <div className="flex gap-2 mb-3">
                                         <input
                                             type="text"
@@ -459,7 +459,7 @@ export const DrugInteraction: React.FC = () => {
                         <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 mb-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div className="md:col-span-2 relative">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nome do Medicamento</label>
+                                    <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Nome do Medicamento</label>
                                     <div className="relative">
                                         <input
                                             type="text"
@@ -494,7 +494,7 @@ export const DrugInteraction: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="md:col-span-2 relative">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Motivo do Uso (Opcional - Busca DATASUS)</label>
+                                    <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Motivo do Uso (Opcional - Busca DATASUS)</label>
                                     <div className="relative">
                                         <input
                                             type="text"
@@ -529,7 +529,7 @@ export const DrugInteraction: React.FC = () => {
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Dosagem</label>
+                                    <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Dosagem</label>
                                     <input
                                         type="text"
                                         className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -539,7 +539,7 @@ export const DrugInteraction: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Forma</label>
+                                    <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Forma</label>
                                     <select
                                         className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         value={currentMed.form}
@@ -559,7 +559,7 @@ export const DrugInteraction: React.FC = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Frequência - A cada</label>
+                                    <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Frequência - A cada</label>
                                     <select
                                         className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         value={currentMed.frequency}
@@ -574,7 +574,7 @@ export const DrugInteraction: React.FC = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Horário Habitual</label>
+                                    <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">Horário Habitual</label>
                                     <select
                                         className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
                                         value={currentMed.schedule}

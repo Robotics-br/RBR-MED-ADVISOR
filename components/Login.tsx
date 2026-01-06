@@ -55,7 +55,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                     <div className="space-y-5 sm:space-y-6">
                         <div className="space-y-2 text-left">
-                            <label className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                            <label className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
                                 Usuário
                             </label>
                             <input
@@ -70,7 +70,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         </div>
 
                         <div className="space-y-2 text-left relative">
-                            <label className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                            <label className="text-[10px] sm:text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">
                                 Senha
                             </label>
                             <div className="relative">
@@ -131,7 +131,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </div>
                 </form>
 
-                <p className="mt-8 text-center text-slate-400 text-[9px] sm:text-xs font-medium uppercase tracking-[0.2em] px-4">
+                <p className="mt-8 text-center text-slate-600 text-[9px] sm:text-xs font-medium uppercase tracking-[0.2em] px-4">
                     Controle de Acesso Biométrico e Criptográfico
                 </p>
             </div>
