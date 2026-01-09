@@ -136,14 +136,30 @@ export interface MedicalBoardMember {
   role: string;
 }
 
+export interface SuggestedRemedy {
+  name: string;
+  dosage: string;
+  period: string;
+  reason: string;
+}
+
+export interface NewExamRequirement {
+  name: string;
+  reason: string;
+  specialist: string;
+}
+
 export interface DiagnosisResult {
   boardMembers: MedicalBoardMember[];
   conversation?: { speaker: string; message: string; round: number }[]; // Debate entre especialistas
   discussionSummary: string; // Internal debate summary
   highRiskInteractions: string[]; // Only high risk
   comorbiditiesAnalysis: string; // Logic applied to comorbidities
+  alteredExamsAnalysis?: string; // Analysis of altered exams only
   finalConsensus: string; // The diagnosis
-  suggestedExams?: string[]; // Exames sugeridos para comprovação diagnóstica
+  suggestedExams?: string[]; // Legacy - kept for compatibility
+  newExams?: NewExamRequirement[]; // New structured exams
+  suggestedRemedies?: SuggestedRemedy[]; // New structured remedies
   recommendations: string;
   disclaimer: string;
   references: { title: string; url: string }[];

@@ -198,6 +198,8 @@ export const AiDiagnosis: React.FC = () => {
         medSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
+    const [modalTitle, setModalTitle] = useState("Junta Médica Digital");
+
     const handleAnalyze = async (type: 'ALLOPATHIC' | 'HOMEOPATHIC') => {
         if (!profile.patientName || !profile.age || !profile.gender || !profile.weight || !profile.height) {
             setError("Preencha todos os campos da Identificação: Nome, Idade, Gênero, Peso e Altura.");
@@ -207,6 +209,7 @@ export const AiDiagnosis: React.FC = () => {
             setError("O campo Sintomas é obrigatório.");
             return;
         }
+        setModalTitle(type === 'ALLOPATHIC' ? 'Diagnóstico Medicina Alopática' : 'Diagnóstico Medicina Integrativa');
         setLoading(true);
         setError(null);
         setModalOpen(true);
@@ -762,13 +765,25 @@ export const AiDiagnosis: React.FC = () => {
                     <div className="flex-1 flex flex-col items-center py-8"><div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full" /><p className="mt-4 font-bold text-slate-600">Processando...</p></div>
                 ) : (
                     <>
-                        <button onClick={() => handleAnalyze('ALLOPATHIC')} className="flex-1 py-6 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all hover:shadow-2xl">Diagnóstico Alopático</button>
-                        <button onClick={() => handleAnalyze('HOMEOPATHIC')} className="flex-1 py-6 bg-teal-600 text-white rounded-2xl font-bold text-lg hover:bg-teal-700 transition-all hover:shadow-2xl">Diagnóstico Homeopático</button>
+                        <button
+                            disabled={analyzingExams}
+                            onClick={() => handleAnalyze('ALLOPATHIC')}
+                            className={`flex-1 py-6 bg-blue-600 text-white rounded-2xl font-bold text-lg transition-all ${analyzingExams ? 'opacity-30 cursor-not-allowed grayscale' : 'hover:bg-blue-700 hover:shadow-2xl active:scale-[0.98]'}`}
+                        >
+                            {analyzingExams ? 'Aguardando Análise de Exames...' : 'Diagnóstico Alopático'}
+                        </button>
+                        <button
+                            disabled={analyzingExams}
+                            onClick={() => handleAnalyze('HOMEOPATHIC')}
+                            className={`flex-1 py-6 bg-teal-600 text-white rounded-2xl font-bold text-lg transition-all ${analyzingExams ? 'opacity-30 cursor-not-allowed grayscale' : 'hover:bg-teal-700 hover:shadow-2xl active:scale-[0.98]'}`}
+                        >
+                            {analyzingExams ? 'Aguardando Análise de Exames...' : 'Diagnóstico Medicina Integrativa'}
+                        </button>
                     </>
                 )}
             </div>
 
-            <DiagnosisModal isOpen={modalOpen} onClose={() => setModalOpen(false)} data={diagnosisData} loading={loading} profile={profile} symptoms={symptoms} />
+            <DiagnosisModal isOpen={modalOpen} onClose={() => setModalOpen(false)} data={diagnosisData} loading={loading} profile={profile} symptoms={symptoms} title={modalTitle} />
 
             <ExamAnalysisModal
                 isOpen={examModalOpen}

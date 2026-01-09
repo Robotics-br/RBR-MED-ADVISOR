@@ -550,87 +550,70 @@ export const searchMedication = async (query: string): Promise<MedicationSuggest
 
 export const runAllopathicDiagnosis = async (profile: PatientProfile, symptoms: string): Promise<DiagnosisResult> => {
     const prompt = `
-    ⚕️ MODO: JUNTA MÉDICA ALOPÁTICA EXCLUSIVA ⚕️
+    ⚕️ MODO: JUNTA MÉDICA ALOPÁTICA EXCLUSIVA (ALTA COMPLEXIDADE) ⚕️
     
     ATENÇÃO CRÍTICA - COMPOSIÇÃO DA JUNTA:
-    Esta junta deve ser composta EXCLUSIVAMENTE por médicos especialistas ALOPATAS com mais de 20 anos de experiência.
-    ❌ NÃO inclua: homeopatas, acupunturistas, terapeutas holísticos, ou qualquer prática integrativa/alternativa.
-    ✅ APENAS: Médicos formados em Medicina Alopática tradicional (ex: Cardiologista, Endocrinologista, Geriatra, Nefrologista, Pneumologista, Neurologista, etc.).
+    Esta junta deve ser composta EXCLUSIVAMENTE por médicos especialistas ALOPATAS com mais de 20 anos de experiência clínica absoluta.
+    
+    SELEÇÃO DINÂMICA DE ESPECIALISTAS:
+    Você deve selecionar os membros da junta (mínimo 4, máximo 6) de acordo com o perfil do paciente e suas comorbidades:
+    1. OBRIGATÓRIO: Um Farmacêutico Sênior PhD especialista em Farmacologia Clínica para análise de interações.
+    2. SE houver doenças cardíacas/HAS: Inclua um Cardiologista Sênior.
+    3. SE houver diabetes/tireoide: Inclua um Endocrinologista Sênior.
+    4. SE houver idade > 65 anos: Inclua um Geriatra Sênior.
+    5. Selecione outros especialistas (Neurologista, Nefrologista, Pneumologista, etc.) conforme a necessidade clínica baseada nos sintomas e histórico.
+
+    ❌ PROIBIDO: Práticas integrativas, homeopatia, acupuntura ou terapias não-alopáticas convencionais.
     
     DADOS DO PACIENTE:
     - Nome: ${profile.patientName || 'Não informado'}
-    - Idade: ${profile.age}
-    - Gênero: ${profile.gender}
+    - Idade: ${profile.age} | Gênero: ${profile.gender}
     - Peso: ${profile.weight} | Altura: ${profile.height || 'Não informado'}
     - Alergias: ${profile.allergies || 'Nenhuma informada'}
     - Histórico Familiar: ${profile.familyHistory || 'Não informado'}
     - Comorbidades: ${profile.diseases || 'Nenhuma'}
-    - Hábitos: Tabagismo: ${profile.smoking} | Etilismo: ${profile.alcohol} | Atividade Física: ${profile.physicalActivity}
+    - Hábitos/Estilo de Vida: Tabagismo: ${profile.smoking} | Etilismo: ${profile.alcohol} | Atividade Física: ${profile.physicalActivity}
     - Medicamentos em Uso: ${profile.medications.map(m => `${m.name} (${m.dosage}${m.frequency ? ', ' + m.frequency : ''}${m.reason ? ' - Motivo: ' + m.reason : ''})`).join('; ') || 'Nenhum'}
-    - Sintomas: "${symptoms}"
+    - Queixa Principal: "${symptoms}"
 
     ---
     
-    📋 PROTOCOLO DE DEBATE MULTI-ROUND ATÉ CONSENSO:
+    📋 PROTOCOLO DE DEBATE E ANÁLISE:
+    1. Discussão clínica rigorosa baseada em diretrizes (JAMA, NEJM, Lancet).
+    2. Análise detalhada das interações medicamentosas (Parecer do Farmacêutico).
+    3. Interpretação de exames complementares (se houver análise abaixo).
     
-    1. ROUND 1 - APRESENTAÇÃO INICIAL (cada especialista apresenta sua hipótese)
-    2. ROUND 2 - QUESTIONAMENTOS (especialistas questionam uns aos outros sobre pontos controversos)
-    3. ROUND 3 - DEFESA/REFUTAÇÃO (cada um defende ou refina sua posição)
-    4. ROUND FINAL - CONSENSO (apresentação da conclusão unificada)
-    
-    REGRAS DO DEBATE:
-    - Especialistas DEVEM questionar pontos com os quais não concordam
-    - Debate continua até que TODOS cheguem a um consenso
-    - Mínimo de 2 rounds, máximo de 4 rounds
-    - Cada especialista deve ter no mínimo 2 falas
-    - IMPORTANTE: No campo "speaker" da "conversation", use APENAS a especialidade (ex: "Cardiologia", "Endocrinologia") SEM nomes de médicos
-    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, você DEVE incluir na junta um "Patologista Clínica / Radiologista" para realizar a interpretação técnica desses dados específicos durante o debate. A junta DEVE analisar e debater obrigatoriamente estes exames para fundamentar o diagnóstico final.
-    
-    ---
-    
-    REGRA FILOLÓGICA GERAL:
-    Para CADA termo técnico em TODO o relatório, coloque explicação entre parênteses.
-    Exemplo: "Hipotireoidismo subclínico (tireoide funcionando devagar sem sintomas graves)"
-
-    ⚠️ REGRA CRÍTICA PARA ALERTAS DE RISCO FARMACOLÓGICO:
-    OBRIGATÓRIO: Na seção "highRiskInteractions", para CADA jargão médico ou nome técnico de condição/efeito, você DEVE SEMPRE colocar a explicação em linguagem leiga entre parênteses.
-    Exemplos:
-    ✅ "Risco de Hipercalemia (excesso de potássio no sangue) ao combinar..."
-    ✅ "Pode causar Rabdomiólise (destruição muscular grave) quando..."
-    ✅ "Interação com QTc prolongado (ritmo cardíaco irregular perigoso)..."
-    ❌ "Risco de Hipercalemia" (INCORRETO - sem explicação)
-    
-    ---
-
     SAÍDA ESPERADA (JSON válido, sem markdown):
     {
        "boardMembers": [
-          { "name": "", "role": "Cardiologista Sênior", "experience": "25 anos", "specialty": "Cardiologia" }
+          { "name": "Dr(a). [Nome]", "role": "[Especialidade] Sênior", "experience": "25 anos", "specialty": "[Especialidade]" }
        ],
        "conversation": [
-          { "speaker": "Cardiologia", "message": "Analisando os sintomas apresentados, observo sinais de possível insuficiência cardíaca. A PA elevada combinada com edema sugere sobrecarga volêmica.", "round": 1 },
-          { "speaker": "Endocrinologia", "message": "Concordo parcialmente, mas considero importante investigar função tireoidiana. Hipotireoidismo pode mimetizar sintomas cardíacos e causar retenção hídrica.", "round": 2 },
-          { "speaker": "Cardiologia", "message": "Excelente ponto. Sugiro ECG e ecocardiograma, além do TSH que o colega endocrinologista mencionou.", "round": 3 }
+          { "speaker": "[Especialidade]", "message": "...", "round": 1 }
        ],
-       "comorbiditiesAnalysis": "Análise detalhada das comorbidades (Markdown permitido).",
-       "discussionSummary": "Resumo executivo do debate (Markdown permitido)",
+       "comorbiditiesAnalysis": "Análise técnica das patologias e estilo de vida...",
+       "alteredExamsAnalysis": "Análise técnica dos exames que apresentam alterações clínicas significativas...",
+       "discussionSummary": "Resumo executivo do debate e raciocínio clínico...",
        "highRiskInteractions": [
-          "Risco de Hipercalemia (excesso de potássio no sangue) ao combinar Losartana com Espironolactona - CRÍTICO"
+          "Alertas de interações medicamentosas críticas e colaterais graves..."
        ],
-       "finalConsensus": "Diagnóstico consensual final (Markdown permitido)",
-       "suggestedExams": [
-          "Hemograma completo - Para avaliar células sanguíneas e detectar anemia ou infecções",
-          "TSH e T4 livre - Avaliação da função tireoidiana (glândula que regula metabolismo)",
-          "Glicemia de jejum e HbA1c - Investigação de diabetes (açúcar no sangue elevado)",
-          "Ecocardiograma - Ultrassom do coração para avaliar bombeamento e válvulas",
-          "ECG - Registro elétrico do coração para detectar arritmias (batimentos irregulares)"
+       "finalConsensus": "Consenso diagnóstico final e conclusão unificada...",
+       "newExams": [
+          { "name": "Nome do Exame", "reason": "Justificativa clínica para solicitação", "specialist": "Especialidade solicitante" }
        ],
-       "recommendations": "Plano terapêutico (Markdown permitido)",
-       "disclaimer": "Este relatório foi gerado por IA como ferramenta auxiliar. Não substitui consulta médica presencial.",
+       "suggestedRemedies": [
+          { "name": "Nome do Fármaco/Substância", "dosage": "Posologia e via", "period": "Duração do tratamento", "reason": "Motivação farmacológica" }
+       ],
+       "recommendations": "Orientações gerais sobre conduta, estilo de vida e monitoramento...",
+       "disclaimer": "Este relatório é uma ferramenta de suporte à decisão clínica e não substitui a consulta presencial.",
        "references": [
-          { "title": "Diretriz relevante", "url": "https://..." }
+          { "title": "Diretriz/Estudo Referência", "url": "URL funcional" }
        ]
     }
+
+    ⚠️ REGRA DE EXAMES: Se houver '[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]' abaixo, inclua na junta um Patologista ou Radiologista e apresente apenas a análise dos resultados ALTERADOS.
+
+    ${profile.examAnalysis ? `[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]\n${profile.examAnalysis}` : ''}
     `;
 
     try {
@@ -672,88 +655,74 @@ export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms:
     const prompt = `
     🌿 MODO: JUNTA MÉDICA INTEGRATIVA/HOMEOPÁTICA EXCLUSIVA 🌿
     
-    ATENÇÃO CRÍTICA - COMPOSIÇÃO DA JUNTA:
-    Esta junta deve ser composta EXCLUSIVAMENTE por especialistas em MEDICINAS INTEGRATIVAS E HOMEOPÁTICAS com mais de 20 anos de experiência.
-    ❌ NÃO inclua: médicos alopatas convencionais, farmacologistas alopáticos.
-    ✅ APENAS: Homeopatas Clássicos, Especialistas em MTC/Acupuntura, Médicos Holísticos, Fitoterapeutas, Ayurveda, Medicina Bioenergética.
+    ⚠️⚠️⚠️ ATENÇÃO CRÍTICA - COMPOSIÇÃO DA JUNTA (LEIA COM ATENÇÃO) ⚠️⚠️⚠️
     
-    DADOS DO PACIENTE:
+    Esta junta deve ser composta EXCLUSIVAMENTE por especialistas com mais de 20 anos de experiência nas seguintes áreas:
+    1. Especialista em Medicina Tradicional Chinesa (MTC)
+    2. Médico Homeopata Clássico (Hahnemanniano/Unicista)
+    3. Acupunturista Tradicional
+    4. Médico de Medicina Holística / Integrativa
+    5. Farmacêutico Sênior PhD (especialista em Farmacognosia e Interações Medicamentosas)
+    6. Fisioterapeuta Integrativo (Opcional: incluir apenas se houver queixas musculoesqueléticas ou necessidade de reabilitação física)
+
+    ❌❌❌ PROIBIDO INCLUIR (NÃO PODE DE JEITO NENHUM):
+    - Médicos alopatas convencionais sem formação específica em integrativa
+    - Cardiologistas, Endocrinologistas, Neurologistas convencionais, etc.
+    
+    DADOS DO PACIENTE (CONSIDERAR INTEGRALMENTE):
     - Nome: ${profile.patientName || 'Não informado'}
-    - Idade: ${profile.age}
-    - Gênero: ${profile.gender}
+    - Idade: ${profile.age} | Gênero: ${profile.gender}
     - Peso: ${profile.weight} | Altura: ${profile.height || 'Não informado'}
+    - IMC: ${profile.height && parseFloat(profile.height) > 0 ? (parseFloat(profile.weight) / (Math.pow(parseFloat(profile.height) / 100, 2))).toFixed(1) : 'Não informado'}
     - Alergias: ${profile.allergies || 'Nenhuma informada'}
     - Histórico Familiar: ${profile.familyHistory || 'Não informado'}
     - Comorbidades: ${profile.diseases || 'Nenhuma'}
-    - Hábitos: Tabagismo: ${profile.smoking} | Etilismo: ${profile.alcohol} | Atividade Física: ${profile.physicalActivity}
+    - Hábitos/Estilo de Vida: Tabagismo: ${profile.smoking} | Etilismo: ${profile.alcohol} | Atividade Física: ${profile.physicalActivity}
     - Medicamentos em Uso: ${profile.medications.map(m => `${m.name} (${m.dosage}${m.frequency ? ', ' + m.frequency : ''}${m.reason ? ' - Motivo: ' + m.reason : ''})`).join('; ') || 'Nenhum'}
-    - Sintomas: "${symptoms}"
+    - Queixa Principal: "${symptoms}"
 
     ---
     
-    📋 PROTOCOLO DE DEBATE MULTI-ROUND ATÉ CONSENSO:
+    📋 PROTOCOLO DE DEBATE:
+    1. Análise sob a ótica de cada sistema (Qi, Miasmas, Terreno Biológico).
+    2. Discussão sobre interações entre medicamentos alopáticos em uso e propostas integrativas.
+    3. Integração de resultados de exames (se houver análise de exames anexada abaixo).
     
-    1. ROUND 1 - AVALIAÇÃO ENERGÉTICA (cada especialista apresenta sua análise sob ótica do seu sistema)
-    2. ROUND 2 - QUESTIONAMENTOS (especialistas questionam e complementam as visões uns dos outros)
-    3. ROUND 3 - INTEGRAÇÃO (buscar pontos comuns entre Homeopatia, MTC, etc.)
-    4. ROUND FINAL - CONSENSO TERAPÊUTICO (plano integrado unificado)
-    
-    REGRAS DO DEBATE:
-    - Especialistas DEVEM questionar e aprofundar pontos divergentes
-    - Debate continua até consenso sobre abordagem integrativa
-    - Mínimo de 2 rounds, máximo de 4 rounds
-    - Cada especialista deve contribuir com no mínimo 2 falas
-    - IMPORTANTE: No campo "speaker" da "conversation", use APENAS a especialidade (ex: "Homeopatia", "Medicina Tradicional Chinesa") SEM nomes/títulos de médicos
-    - SE HOUVER a seção "[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]" nos dados, inclua um "Especialista em Diagnóstico Integrativo" focado em correlacionar os laudos laboratoriais/imagem com o terreno biológico do paciente. O debate DEVE integrar estas evidências laboratoriais à visão holística de forma explícita.
-    
-    ---
-    
-    REGRA FILOLÓGICA GERAL:
-    Para CADA termo técnico (médico padrão ou holístico como "Qi", "Miasma", "Simillimum"), coloque explicação para leigos entre parênteses.
-    Exemplo: "Estagnação do Qi do Fígado (energia do fígado bloqueada causando irritação)"
-
-    ⚠️ REGRA CRÍTICA PARA ALERTAS DE RISCO FARMACOLÓGICO:
-    OBRIGATÓRIO: Na seção "highRiskInteractions", para CADA jargão médico ou nome técnico de condição/efeito adverso, você DEVE SEMPRE colocar a explicação em linguagem leiga entre parênteses.
-    Exemplos:
-    ✅ "Risco de Hipercalemia (excesso de potássio no sangue) ao combinar..."
-    ✅ "Pode suprimir sintomas necessários para a Dinamização (processo de cura energética)..."
-    ✅ "Interação com QTc prolongado (ritmo cardíaco irregular perigoso)..."
-    ❌ "Risco de Hipercalemia" (INCORRETO - sem explicação)
-
-    REGRA DE IDENTIDADE:
-    Use apenas cargos/especialidades. Ex: "Dr(a). Especialista Homeopata", "Dr(a). Especialista em MTC"
-
     ---
 
     SAÍDA ESPERADA (JSON válido, sem markdown):
     {
        "boardMembers": [
-          { "name": "", "role": "Dr(a). Especialista Homeopata", "experience": "25 anos em Miasmática", "specialty": "Homeopatia" }
+          { "name": "Dr(a). [Nome]", "role": "Especialista em Medicina Tradicional Chinesa", "experience": "25 anos", "specialty": "MTC" },
+          { "name": "Dr(a). [Nome]", "role": "Médico Homeopata", "experience": "30 anos", "specialty": "Homeopatia" },
+          { "name": "Dr(a). [Nome]", "role": "Acupunturista", "experience": "22 anos", "specialty": "Acupuntura" },
+          { "name": "Dr(a). [Nome]", "role": "Médico Holístico", "experience": "20 anos", "specialty": "Medicina Holística" },
+          { "name": "Dr(a). [Nome]", "role": "Farmacêutico PhD", "experience": "28 anos", "specialty": "Interações" }
        ],
        "conversation": [
-          { "speaker": "Homeopatia", "message": "Identifico o miasma Psora predominante neste caso. Os sintomas cutâneos recorrentes e a tendência à supressão indicam terreno reativo. Sugiro iniciar com Sulphur 30CH.", "round": 1 },
-          { "speaker": "Medicina Tradicional Chinesa", "message": "Concordo com a análise. Acrescento que há deficiência de Yin renal evidente. Os sintomas noturnos e a secura cutânea confirmam. Recomendo acupuntura nos pontos R3 e R6 para tonificar o Yin.", "round": 2 },
-          { "speaker": "Homeopatia", "message": "Perfeito. A abordagem integrada potencializa o efeito. Vamos monitorar a resposta ao Sulphur antes de avançar.", "round": 3 }
+          { "speaker": "Medicina Tradicional Chinesa", "message": "...", "round": 1 }
        ],
-       "comorbiditiesAnalysis": "Análise das comorbidades sob visão holística (Markdown permitido)",
-       "discussionSummary": "Resumo do debate integrativo (Markdown permitido)",
+       "comorbiditiesAnalysis": "Análise detalhada...",
+       "alteredExamsAnalysis": "Análise técnica dos exames alterados...",
+       "discussionSummary": "Resumo do debate...",
        "highRiskInteractions": [
-          "Losartana pode causar Hipotensão ortostática (tontura ao levantar por queda de pressão) - monitorar"
+          "Alerta detalhado..."
        ],
-       "finalConsensus": "Diagnóstico integrativo consensual (Markdown permitido)",
-       "suggestedExams": [
-          "Hemograma completo - Avaliar vitalidade sanguínea e reservas energéticas",
-          "Perfil metabólico - Função hepática e renal (fígado e rins) para avaliar capacidade de eliminação",
-          "Análise de oligoelementos - Zinco, magnésio, selênio (minerais essenciais para energia)",
-          "Cortisol salivar (manhã e noite) - Avaliar ritmo circadiano (ciclo dia-noite) e estresse",
-          "Teste de Intolerâncias alimentares - IgG para alimentos (reações do corpo a comidas)"
+       "finalConsensus": "Diagnóstico e conclusão final...",
+       "newExams": [
+          { "name": "Nome do Exame", "reason": "Por que é necessário", "specialist": "Quem solicita" }
        ],
-       "recommendations": "Plano terapêutico: homeopatia, fitoterapia, acupuntura, etc. (Markdown permitido)",
-       "disclaimer": "Este relatório foi gerado por IA como ferramenta auxiliar. Não substitui consulta médica presencial.",
-       "references": [
-          { "title": "Referência relevante", "url": "https://..." }
-       ]
+       "suggestedRemedies": [
+          { "name": "Nome", "dosage": "Como tomar", "period": "Duração", "reason": "Motivo da indicação" }
+       ],
+       "recommendations": "Orientações gerais (estilo de vida, dieta, etc)...",
+       "disclaimer": "...",
+       "references": []
     }
+    
+    ⚠️ REGRA DE EXAMES: Se houver '[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]' abaixo, você DEVE processar e incluir na análise apenas os resultados que apresentarem ALTERAÇÕES significativas em relação aos valores de referência. Ignore resultados normais.
+
+    ${profile.examAnalysis ? `[ANÁLISE DE EXAMES COMPLEMENTARES ANEXADOS]\n${profile.examAnalysis}` : ''}
     `;
 
     try {
@@ -766,18 +735,18 @@ export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms:
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": "perplexity/sonar", // Modelo Reasoning High-End
+                "model": "perplexity/sonar",
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a Holistic & Homeopathic Medical Board Simulation Engine. Return strictly valid JSON."
+                        "content": "You are a Highly-Skilled Integrative & Homeopathic Medical Board Simulator. Return strictly valid JSON."
                     },
                     {
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                "temperature": 0.3 // Um pouco mais criativo para relacionar conceitos holísticos
+                "temperature": 0.3
             })
         });
 
@@ -790,35 +759,36 @@ export const runHomeopathicDiagnosis = async (profile: PatientProfile, symptoms:
         throw new Error("Falha ao gerar diagnóstico da junta médica integrativa.");
     }
 };
+
 export const analyzeClinicalExam = async (imageUrls: string[]): Promise<string> => {
     if (!imageUrls || imageUrls.length === 0) return "";
 
     const prompt = `
-    Atue como um Especialista em Diagnóstico Complementar (Radiologia e Patologia Clínica).
+    Atue como um Especialista em Diagnóstico Complementar(Radiologia e Patologia Clínica).
     Analise os exames clínicos fornecidos.
-    
-    OBJETIVO:
+
+        OBJETIVO:
     Gerar um RELATÓRIO TÉCNICO ESTRUTURADO para o paciente e para a junta médica.
     
-    ESTRUTURA OBRIGATÓRIA (Use Markdown):
+    ESTRUTURA OBRIGATÓRIA(Use Markdown):
     
     ### 1. RESUMO DOS ACHADOS
-    (SEMPRE QUE POSSÍVEL, apresente resultados laboratoriais em uma TABELA MARKDOWN contendo: Parâmetro, Valor Encontrado, Referência e Status)
+        (SEMPRE QUE POSSÍVEL, apresente resultados laboratoriais em uma TABELA MARKDOWN contendo: Parâmetro, Valor Encontrado, Referência e Status)
     
     ### 2. ALERTAS CRÍTICOS (Atenção ao que deve ser monitorado)
-    (Liste de forma destacada pontos que exigem acompanhamento imediato)
+        (Liste de forma destacada pontos que exigem acompanhamento imediato)
     
-    ### 3. EXPLICAÇÃO TÉCNICO-CIENTÍFICA
-    (Explique a fisiopatologia por trás dos achados, citando o que representam clinicamente)
+    ### 3. EXPLICAÇÃO TÉCNICO - CIENTÍFICA
+        (Explique a fisiopatologia por trás dos achados, citando o que representam clinicamente)
     
     ### 4. RECOMENDAÇÕES DE MONITORAMENTO
-    (SEMPRE QUE POSSÍVEL, use uma TABELA MARKDOWN para sugerir o cronograma de acompanhamento: Exame, Frequência Sugerida, Objetivo)
+        (SEMPRE QUE POSSÍVEL, use uma TABELA MARKDOWN para sugerir o cronograma de acompanhamento: Exame, Frequência Sugerida, Objetivo)
     
     REGRAS DE OURO:
     - IMEDIATAMENTE após qualquer jargão técnico, coloque entre parênteses a tradução para leigos.
     - Se o exame for de imagem, descreva os achados em tópicos claros se uma tabela não for aplicável.
     - Linguagem profissional mas acolhedora.
-    - Mantenha em Português (Brasil).
+    - Mantenha em Português(Brasil).
     `;
 
     try {
@@ -833,7 +803,7 @@ export const analyzeClinicalExam = async (imageUrls: string[]): Promise<string> 
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Authorization": `Bearer ${OPENROUTER_API_KEY} `,
                 "HTTP-Referer": SITE_URL,
                 "X-Title": SITE_NAME,
                 "Content-Type": "application/json"
@@ -851,7 +821,7 @@ export const analyzeClinicalExam = async (imageUrls: string[]): Promise<string> 
         });
 
         if (!response.ok) {
-            throw new Error(`Erro na análise de imagem: ${response.status}`);
+            throw new Error(`Erro na análise de imagem: ${response.status} `);
         }
 
         const json = await response.json();
@@ -866,50 +836,50 @@ export const runTruthMythAnalysis = async (medication: string, purpose: string):
     ⚖️ MODO: JUNTA MÉDICA - VERDADE OU MITO ⚖️
     
     COMPOSIÇÃO DA JUNTA:
-    1. Especialista em Farmacologia Clínica (Rigor técnico)
-    2. Médico Internista (Visão prática de consultório)
-    3. Pesquisador em Medicina Baseada em Evidências (EB-Medicine)
+1. Especialista em Farmacologia Clínica(Rigor técnico)
+2. Médico Internista(Visão prática de consultório)
+3. Pesquisador em Medicina Baseada em Evidências(EB - Medicine)
     
     OBJETO DE ANÁLISE:
-    - Medicamento: "${medication}"
+- Medicamento: "${medication}"
     - Finalidade pretendida pelo usuário: "${purpose}"
-    
-    TAREFA:
-    Debatam entre si se o uso deste medicamento para esta finalidade específica é uma VERDADE (Eficaz/Recomendado), 
-    um MITO (Ineficaz/Sem evidência) ou uma VERDADE PARCIAL (Eficaz apenas em condições específicas).
+
+TAREFA:
+    Debatam entre si se o uso deste medicamento para esta finalidade específica é uma VERDADE(Eficaz / Recomendado),
+    um MITO(Ineficaz / Sem evidência) ou uma VERDADE PARCIAL(Eficaz apenas em condições específicas).
     
     REGRAS DA DISCUSSÃO:
-    - Mínimo de 3 rounds de conversa.
+- Mínimo de 3 rounds de conversa.
     - Linguagem clara para um LEIGO, mas mantendo o rigor técnico nas entrelinhas.
     - Se houver riscos de "off-label" perigoso, avisem severamente.
-    - FONTES: Use apenas links de domínios confiáveis (PubMed, Mayo Clinic, Cochrane, etc). Verifique a consistência da URL antes de gerar.
+    - FONTES: Use apenas links de domínios confiáveis(PubMed, Mayo Clinic, Cochrane, etc).Verifique a consistência da URL antes de gerar.
     
-    SAÍDA ESPERADA (JSON válido, sem markdown):
-    {
-       "boardMembers": [
-         {"name": "Dra. Elisa Fagundes", "specialty": "Farmacologia Clínica", "experience": "USP/Harvard", "role": "Analista de Mecanismo de Ação"},
-         {"name": "Dr. Marcos Silveira", "specialty": "Clínica Médica", "experience": "25 anos de prática", "role": "Perspectiva Clínica Real"},
-         {"name": "Dr. Ricardo Nunes", "specialty": "Medicina Baseada em Evidências", "experience": "Editor de Periódicos Médicos", "role": "Validador de Evidência"}
+    SAÍDA ESPERADA(JSON válido, sem markdown):
+{
+    "boardMembers": [
+        { "name": "Dra. Elisa Fagundes", "specialty": "Farmacologia Clínica", "experience": "USP/Harvard", "role": "Analista de Mecanismo de Ação" },
+        { "name": "Dr. Marcos Silveira", "specialty": "Clínica Médica", "experience": "25 anos de prática", "role": "Perspectiva Clínica Real" },
+        { "name": "Dr. Ricardo Nunes", "specialty": "Medicina Baseada em Evidências", "experience": "Editor de Periódicos Médicos", "role": "Validador de Evidência" }
+    ],
+        "conversation": [
+            { "speaker": "Farmacologia Clínica", "message": "...", "round": 1 },
+            { "speaker": "Medicina Baseada em Evidências", "message": "...", "round": 1 },
+            ...
        ],
-       "conversation": [
-         {"speaker": "Farmacologia Clínica", "message": "...", "round": 1},
-         {"speaker": "Medicina Baseada em Evidências", "message": "...", "round": 1},
-         ...
-       ],
-       "discussionSummary": "Resumo executivo do embate (Markdown permitido)",
-       "finalConsensus": "# VEREDITO: [VERDADE | MITO | VERDADE PARCIAL]\\n\\nExplicação detalhada e simplificada para o usuário leigo.",
-       "recommendations": "Orientações de segurança e próximos passos (Markdown permitido)",
-       "disclaimer": "Este debate é gerado por IA e tem fins informativos. Jamais se automedique.",
-       "references": [{"title": "...", "url": "..."}],
-       "highRiskInteractions": [], "comorbiditiesAnalysis": "Análise focada no uso citado"
-    }
-    `;
+            "discussionSummary": "Resumo executivo do embate (Markdown permitido)",
+                "finalConsensus": "# VEREDITO: [VERDADE | MITO | VERDADE PARCIAL]\\n\\nExplicação detalhada e simplificada para o usuário leigo.",
+                    "recommendations": "Orientações de segurança e próximos passos (Markdown permitido)",
+                        "disclaimer": "Este debate é gerado por IA e tem fins informativos. Jamais se automedique.",
+                            "references": [{ "title": "...", "url": "..." }],
+                                "highRiskInteractions": [], "comorbiditiesAnalysis": "Análise focada no uso citado"
+}
+`;
 
     try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Authorization": `Bearer ${OPENROUTER_API_KEY} `,
                 "HTTP-Referer": SITE_URL,
                 "X-Title": SITE_NAME,
                 "Content-Type": "application/json"

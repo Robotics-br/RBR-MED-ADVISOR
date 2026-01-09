@@ -381,7 +381,7 @@ const App: React.FC = () => {
                         className="flex-1 flex items-center justify-center px-6 py-7 bg-medical-navy text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-brand-600 transition-all duration-500 shadow-xl disabled:opacity-20 group/btn relative overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
-                        <span className="relative z-10">{loading ? 'Convocando...' : 'Junta Alopática (20+ anos)'}</span>
+                        <span className="relative z-10">{loading ? 'Convocando...' : 'Diagnóstico Medicina Alopática'}</span>
                       </button>
                       <button
                         type="button"
@@ -390,7 +390,7 @@ const App: React.FC = () => {
                         className="flex-1 flex items-center justify-center px-6 py-7 bg-teal-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-teal-700 transition-all duration-500 shadow-xl disabled:opacity-20 group/btn relative overflow-hidden"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-teal-700 opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
-                        <span className="relative z-10 text-center">{loading ? 'Convocando...' : 'Junta Integrativa (20+ anos)'}</span>
+                        <span className="relative z-10 text-center">{loading ? 'Convocando...' : 'Diagnóstico Medicina Integrativa'}</span>
                       </button>
                     </div>
                     <button
