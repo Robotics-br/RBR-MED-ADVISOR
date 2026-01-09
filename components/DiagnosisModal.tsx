@@ -83,24 +83,38 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
         if (!element) return;
         setIsGeneratingPdf(true);
         try {
-            const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+            // A4 dimensions in mm: 210 x 297
+            const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
 
-            // Render at 2x scale for maximum clarity
+            // Render at high scale for maximum clarity
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
-                windowWidth: 800 // Consistent width for table layout
+                windowWidth: 850 // Consistent width matching the template
             });
 
-            const imgData = canvas.toDataURL('image/jpeg', 1.0);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
 
-            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            // First page
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            // Additional pages if content overflows
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
             pdf.save(`Laudo-Medico-${profile?.patientName || 'Paciente'}-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
-
             setIsGeneratingPdf(false);
         } catch (error) {
             console.error('Erro ao gerar PDF:', error);
@@ -595,12 +609,13 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                 </div>
 
                                 {/* Board Members */}
-                                <div style={{ marginBottom: '30px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                                    <div style={{ fontSize: '9px', fontWeight: 'bold', color: '#1e40af', marginBottom: '10px', textTransform: 'uppercase' }}>Junta Médica Responsável:</div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                <div style={{ marginBottom: '35px', backgroundColor: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#1e40af', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Junta Médica Responsável:</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                                         {(data.boardMembers || []).map((m, i) => (
-                                            <div key={i} style={{ fontSize: '8px', color: '#475569', backgroundColor: '#ffffff', padding: '5px 10px', borderRadius: '5px', border: '1px solid #cbd5e1' }}>
-                                                <strong>{m.name}</strong> • {m.specialty}
+                                            <div key={i} style={{ fontSize: '9px', color: '#334155', backgroundColor: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                                <strong style={{ color: '#1e40af' }}>{m.name}</strong><br />
+                                                <span style={{ fontSize: '8px', color: '#64748b' }}>{m.specialty} • {m.experience}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -628,69 +643,75 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                 </div>
 
                                 {/* Comorbidities & Interactions */}
-                                <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
+                                <div style={{ display: 'flex', gap: '30px', marginBottom: '35px' }}>
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e40af', marginBottom: '10px' }}>II. COMORBIDADES</div>
-                                        <div style={{ fontSize: '9px', color: '#475569', lineHeight: '1.5' }}>{data.comorbiditiesAnalysis}</div>
+                                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e40af', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>II. ANÁLISE DE COMORBIDADES</div>
+                                        <div style={{ fontSize: '10px', color: '#334155', lineHeight: '1.6', textAlign: 'justify' }}>{data.comorbiditiesAnalysis}</div>
                                     </div>
-                                    <div style={{ flex: 1, backgroundColor: '#fef2f2', padding: '15px', borderRadius: '10px', border: '1px solid #fee2e2' }}>
-                                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#991b1b', marginBottom: '10px' }}>III. INTERAÇÕES MEDICAMENTOSAS</div>
-                                        <div style={{ fontSize: '9px', color: '#b91c1c', lineHeight: '1.5' }}>{data.drugInteractions}</div>
+                                    <div style={{ flex: 1, backgroundColor: '#fff1f2', padding: '20px', borderRadius: '15px', border: '1px solid #fecdd3' }}>
+                                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#9f1239', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>III. RISCOS E INTERAÇÕES CRÍTICAS</div>
+                                        <div style={{ fontSize: '9px', color: '#be123c', lineHeight: '1.6' }}>
+                                            {(data.highRiskInteractions || []).length > 0 ? (
+                                                <ul style={{ margin: 0, paddingLeft: '15px' }}>
+                                                    {data.highRiskInteractions.map((risk, i) => (
+                                                        <li key={i} style={{ marginBottom: '8px' }}>{risk}</li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                "Nenhuma interação de alto risco identificada pela junta médica para o perfil atual."
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Altered Exams */}
                                 {data.alteredExamsAnalysis && (
-                                    <div style={{ marginBottom: '30px' }}>
-                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '1px solid #cbd5e1', paddingBottom: '5px', marginBottom: '15px' }}>
+                                    <div style={{ marginBottom: '35px' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                             IV. ANÁLISE DE EXAMES ALTERADOS
                                         </div>
-                                        <div style={{ fontSize: '10px', color: '#334155', lineHeight: '1.6', textAlign: 'justify' }}>
+                                        <div style={{ fontSize: '10.5px', color: '#334155', lineHeight: '1.7', textAlign: 'justify', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                                             {data.alteredExamsAnalysis}
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Board Debate */}
-                                <div style={{ marginBottom: '30px' }}>
-                                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '1px solid #cbd5e1', paddingBottom: '5px', marginBottom: '15px' }}>
+                                <div style={{ marginBottom: '35px' }}>
+                                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                         V. DEBATE CLÍNICO DA JUNTA (SUMÁRIO)
                                     </div>
-                                    <div style={{ fontSize: '10px', color: '#334155', lineHeight: '1.6', textAlign: 'justify' }}>
-                                        {data.discussionSummary}
-                                    </div>
+                                    <div style={{ fontSize: '10.5px', color: '#334155', lineHeight: '1.7', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: (data.discussionSummary || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
                                 </div>
 
                                 {/* Consensus */}
-                                <div style={{ marginBottom: '30px', backgroundColor: '#f0fdf4', padding: '20px', borderRadius: '15px', border: '2px solid #22c55e' }}>
-                                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#166534', marginBottom: '10px', textTransform: 'uppercase' }}>
+                                <div style={{ marginBottom: '40px', backgroundColor: '#f0fdf4', padding: '30px', borderRadius: '20px', border: '2px solid #22c55e', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#166534', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid #bbf7d0', paddingBottom: '10px' }}>
                                         VI. CONSENSO DIAGNÓSTICO FINAL
                                     </div>
-                                    <div style={{ fontSize: '11px', color: '#14532d', lineHeight: '1.7', fontWeight: '500' }}>
-                                        {data.finalConsensus}
-                                    </div>
+                                    <div style={{ fontSize: '11.5px', color: '#14532d', lineHeight: '1.8', fontWeight: '500', textAlign: 'justify', whiteSpace: 'pre-line' }} dangerouslySetInnerHTML={{ __html: (data.finalConsensus || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                                 </div>
 
                                 {/* New Exams Requested */}
                                 {(data.newExams || []).length > 0 && (
-                                    <div style={{ marginBottom: '30px', pageBreakInside: 'avoid' }}>
-                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '1px solid #cbd5e1', paddingBottom: '5px', marginBottom: '15px' }}>
+                                    <div style={{ marginBottom: '35px', pageBreakInside: 'avoid' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '2px solid #e2e8f0', paddingBottom: '8px', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                             VII. NOVOS EXAMES SOLICITADOS PELA JUNTA
                                         </div>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5px' }}>
                                             <thead>
                                                 <tr style={{ backgroundColor: '#f1f5f9' }}>
-                                                    <th style={{ border: '1px solid #e2e8f0', padding: '8px', textAlign: 'left' }}>EXAME</th>
-                                                    <th style={{ border: '1px solid #e2e8f0', padding: '8px', textAlign: 'left' }}>MOTIVAÇÃO</th>
-                                                    <th style={{ border: '1px solid #e2e8f0', padding: '8px', textAlign: 'left' }}>SOLICITANTE</th>
+                                                    <th style={{ border: '1px solid #e2e8f0', padding: '10px', textAlign: 'left', color: '#1e40af' }}>EXAME</th>
+                                                    <th style={{ border: '1px solid #e2e8f0', padding: '10px', textAlign: 'left', color: '#1e40af' }}>MOTIVAÇÃO</th>
+                                                    <th style={{ border: '1px solid #e2e8f0', padding: '10px', textAlign: 'left', color: '#1e40af' }}>SOLICITANTE</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {data.newExams!.map((exam, i) => (
                                                     <tr key={i}>
-                                                        <td style={{ border: '1px solid #e2e8f0', padding: '8px', fontWeight: 'bold' }}>{exam.name}</td>
-                                                        <td style={{ border: '1px solid #e2e8f0', padding: '8px' }}>{exam.reason}</td>
-                                                        <td style={{ border: '1px solid #e2e8f0', padding: '8px' }}>{exam.specialist}</td>
+                                                        <td style={{ border: '1px solid #e2e8f0', padding: '10px', fontWeight: 'bold', color: '#1e293b' }}>{exam.name}</td>
+                                                        <td style={{ border: '1px solid #e2e8f0', padding: '10px', color: '#334155' }}>{exam.reason}</td>
+                                                        <td style={{ border: '1px solid #e2e8f0', padding: '10px', color: '#334155' }}>{exam.specialist}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -700,33 +721,33 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
 
                                 {/* Remedies Table */}
                                 {(data.suggestedRemedies || []).length > 0 && (
-                                    <div style={{ marginBottom: '30px', pageBreakInside: 'avoid' }}>
-                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#166534', borderBottom: '1px solid #b7e4c7', paddingBottom: '5px', marginBottom: '15px' }}>
+                                    <div style={{ marginBottom: '35px', pageBreakInside: 'avoid' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#166534', borderBottom: '2px solid #b7e4c7', paddingBottom: '8px', marginBottom: '15px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                             VIII. PLANO TERAPÊUTICO E CONDUTA {title.includes('Integrativa') ? 'INTEGRATIVA' : 'ALOPÁTICA'}
                                         </div>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5px' }}>
                                             <thead>
                                                 <tr style={{ backgroundColor: '#f0fdf4' }}>
-                                                    <th style={{ border: '1px solid #b7e4c7', padding: '8px', textAlign: 'left' }}>REMEDIO/SUBSTANCIA</th>
-                                                    <th style={{ border: '1px solid #b7e4c7', padding: '8px', textAlign: 'left' }}>POSOLOGIA</th>
-                                                    <th style={{ border: '1px solid #b7e4c7', padding: '8px', textAlign: 'left' }}>PERIODO</th>
-                                                    <th style={{ border: '1px solid #b7e4c7', padding: '8px', textAlign: 'left' }}>MOTIVAÇÃO</th>
+                                                    <th style={{ border: '1px solid #b7e4c7', padding: '10px', textAlign: 'left', color: '#166534' }}>REMEDIO/SUBSTANCIA</th>
+                                                    <th style={{ border: '1px solid #b7e4c7', padding: '10px', textAlign: 'left', color: '#166534' }}>POSOLOGIA</th>
+                                                    <th style={{ border: '1px solid #b7e4c7', padding: '10px', textAlign: 'left', color: '#166534' }}>PERIODO</th>
+                                                    <th style={{ border: '1px solid #b7e4c7', padding: '10px', textAlign: 'left', color: '#166534' }}>MOTIVAÇÃO</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {data.suggestedRemedies!.map((remedy, i) => (
                                                     <tr key={i}>
-                                                        <td style={{ border: '1px solid #b7e4c7', padding: '8px', fontWeight: 'bold' }}>{remedy.name}</td>
-                                                        <td style={{ border: '1px solid #b7e4c7', padding: '8px' }}>{remedy.dosage}</td>
-                                                        <td style={{ border: '1px solid #b7e4c7', padding: '8px' }}>{remedy.period}</td>
-                                                        <td style={{ border: '1px solid #b7e4c7', padding: '8px', fontStyle: 'italic' }}>{remedy.reason}</td>
+                                                        <td style={{ border: '1px solid #b7e4c7', padding: '10px', fontWeight: 'bold', color: '#1e293b' }}>{remedy.name}</td>
+                                                        <td style={{ border: '1px solid #b7e4c7', padding: '10px', color: '#334155' }}>{remedy.dosage}</td>
+                                                        <td style={{ border: '1px solid #b7e4c7', padding: '10px', color: '#334155' }}>{remedy.period}</td>
+                                                        <td style={{ border: '1px solid #b7e4c7', padding: '10px', fontStyle: 'italic', color: '#475569' }}>{remedy.reason}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
-                                        <div style={{ marginTop: '15px', fontSize: '10px', color: '#475569', lineHeight: '1.5' }}>
+                                        <div style={{ marginTop: '20px', fontSize: '10.5px', color: '#334155', lineHeight: '1.6', backgroundColor: '#f0fdf4', padding: '15px', borderRadius: '10px', border: '1px solid #b7e4c7' }}>
                                             <strong>RECOMENDAÇÕES ADICIONAIS:</strong><br />
-                                            {data.recommendations}
+                                            <div dangerouslySetInnerHTML={{ __html: (data.recommendations || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
                                         </div>
                                     </div>
                                 )}
