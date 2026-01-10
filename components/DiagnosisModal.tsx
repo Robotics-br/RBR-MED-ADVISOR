@@ -253,6 +253,10 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                         { text: '✓ Consultando base de fontes ouro (JAMA, Lancet, NEJM)', delay: '0s' },
                                         { text: '✓ Verificando protocolos de tratamento recentes', delay: '1s' },
                                         { text: '⏳ Debatendo consenso da junta médica...', delay: '2s', active: true }
+                                    ] : title.includes('Parecer Técnico') ? [
+                                        { text: '✓ Consultando bases científicas (PubMed, Cochrane)', delay: '0s' },
+                                        { text: '✓ Verificando ensaios clínicos randomizados', delay: '1s' },
+                                        { text: '⏳ Debatendo veracidade científica...', delay: '2s', active: true }
                                     ] : [
                                         { text: '✓ Analisando histórico médico e sintomas', delay: '0s' },
                                         { text: '✓ Verificando interações medicamentosas', delay: '1s' },
@@ -457,20 +461,22 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                         </div>
                                     </AccordionSection>
 
-                                    {/* Section 2: Comorbidades e Histórico */}
-                                    <AccordionSection
-                                        id="comorbidades"
-                                        title="Comorbidades e Histórico"
-                                        icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                                        color="purple"
-                                    >
-                                        <div className="prose prose-slate max-w-none text-slate-600 leading-loose text-left text-sm bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                            <div dangerouslySetInnerHTML={formatMedicalText(data?.comorbiditiesAnalysis)} />
-                                        </div>
-                                    </AccordionSection>
+                                    {/* Section 2: Comorbidades e Histórico - Hidden in Truth/Myth Mode */}
+                                    {!title.includes('Parecer Técnico') && (
+                                        <AccordionSection
+                                            id="comorbidades"
+                                            title="Comorbidades e Histórico"
+                                            icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+                                            color="purple"
+                                        >
+                                            <div className="prose prose-slate max-w-none text-slate-600 leading-loose text-left text-sm bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                                <div dangerouslySetInnerHTML={formatMedicalText(data?.comorbiditiesAnalysis)} />
+                                            </div>
+                                        </AccordionSection>
+                                    )}
 
-                                    {/* Section 3: Interações Medicamentosas */}
-                                    {data.highRiskInteractions && data.highRiskInteractions.length > 0 && (
+                                    {/* Section 3: Interações Medicamentosas - Hidden in Truth/Myth Mode */}
+                                    {!title.includes('Parecer Técnico') && data.highRiskInteractions && data.highRiskInteractions.length > 0 && (
                                         <AccordionSection
                                             id="interacoes"
                                             title="Interações Medicamentosas"
@@ -789,8 +795,8 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                     </div>
                                 </div>
 
-                                { /* Patient Profile - Hidden in Treatment Board Mode */}
-                                {!title.includes('Análise Terapêutica') && (
+                                { /* Patient Profile - Hidden in Treatment Board and Truth/Myth Mode */}
+                                {!title.includes('Análise Terapêutica') && !title.includes('Parecer Técnico') && (
                                     <div style={{ marginBottom: '30px' }}>
                                         <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '1px solid #cbd5e1', paddingBottom: '5px', marginBottom: '15px' }}>
                                             I. PERFIL DO PACIENTE
@@ -812,8 +818,8 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                     </div>
                                 )}
 
-                                { /* Comorbidities & Interactions - Hidden in Treatment Board Mode */}
-                                {!title.includes('Análise Terapêutica') && (
+                                { /* Comorbidities & Interactions - Hidden in Treatment Board and Truth/Myth Mode */}
+                                {!title.includes('Análise Terapêutica') && !title.includes('Parecer Técnico') && (
                                     <div style={{ display: 'flex', gap: '30px', marginBottom: '35px' }}>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e40af', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>II. ANÁLISE DE COMORBIDADES</div>
