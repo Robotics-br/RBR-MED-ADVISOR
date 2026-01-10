@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [showMenu, setShowMenu] = useState(true);
   const [boardResult, setBoardResult] = useState<DiagnosisResult | null>(null);
   const [isBoardModalOpen, setIsBoardModalOpen] = useState(false);
+  const [activeBoardType, setActiveBoardType] = useState<'ALLOPATHIC' | 'HOMEOPATHIC'>('ALLOPATHIC');
 
   const handleGoToMenu = () => {
     setActiveMode(null);
@@ -159,17 +160,35 @@ const App: React.FC = () => {
     setData(null);
     setBoardResult(null);
 
+    // Set active board type for UI feedback
+    if (boardType) {
+      setActiveBoardType(boardType);
+    } else if (activeMode === 'discover') {
+      setActiveBoardType('ALLOPATHIC');
+    }
+
     try {
       if (boardType) {
         setIsBoardModalOpen(true);
         const result = await runTreatmentBoardAnalysis(query, null, boardType);
         setBoardResult(result);
       } else {
-        let result;
         if (activeMode === 'discover') {
-          result = await searchMedicalTrials(query);
+          setIsBoardModalOpen(true);
+          // Default to Allopathic for standard Treatment Board, or could infer/ask.
+          // Using ALLOPATHIC as baseline for "Gold Standard" sources.
+          const result = await runTreatmentBoardAnalysis(query, null, 'ALLOPATHIC');
+          setBoardResult(result);
+        } else if (activeMode === 'interactions') {
+          // Existing logic? Or keep empty? Interactions navigates to component usually.
+          // But if it uses search bar...
+        } else {
+          // Default fallbacks
+          if (!boardType) {
+            const result = await searchMedicalTrials(query);
+            if (result) setData(result);
+          }
         }
-        if (result) setData(result);
       }
     } catch (err) {
       setError("Ocorreu um erro ao realizar a pesquisa. Verifique sua conexão ou tente novamente.");
@@ -558,7 +577,7 @@ const App: React.FC = () => {
         onClose={() => setIsBoardModalOpen(false)}
         data={boardResult}
         loading={loading}
-        title="Análise Terapêutica por Junta Médica"
+        title={activeBoardType === 'HOMEOPATHIC' ? "Análise Terapêutica por Junta Médica Integrativa" : "Análise Terapêutica por Junta Médica"}
       />
     </div>
   );

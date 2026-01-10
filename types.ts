@@ -163,4 +163,6 @@ export interface DiagnosisResult {
   recommendations: string;
   disclaimer: string;
   references: { title: string; url: string }[];
+  goldStandardTreatments?: { name: string; description: string; source: string }[];
+  medicationEfficacy?: { medication: string; efficacy: string; context: string }[];
 }

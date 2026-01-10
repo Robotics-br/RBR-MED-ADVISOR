@@ -913,32 +913,56 @@ TAREFA:
 export const runTreatmentBoardAnalysis = async (disease: string, medication: string | null, type: 'ALLOPATHIC' | 'HOMEOPATHIC'): Promise<DiagnosisResult> => {
     const isVerify = !!medication;
     const prompt = `
-    ATUE COMO UM CONSELHO MÉDICO SÊNIOR COMPOSTO POR 3 ESPECIALISTAS COM NO MÍNIMO 20 ANOS DE EXPERIÊNCIA CLÍNICA CADA.
+    ATUE COMO UM CONSELHO MÉDICO SÊNIOR DE ELITE (PhD).
     
     OBJETO DE ANÁLISE:
-    - CONDIÇÃO CLÍNICA: "${disease}"
-    ${isVerify ? `- FÁRMACO ESPECÍFICO PARA VALIDAR: "${medication}"` : '- TAREFA: Identificar e debater os tratamentos mais eficazes (Alopáticos ou Integrativos conforme solicitado).'}
-    - TIPO DE JUNTA: ${type === 'ALLOPATHIC' ? 'ALOPÁTICA (Medicina Convencional)' : 'INTEGRATIVA/HOMEOPÁTICA'}
+    - COMORBIDADE/CONDIÇÃO: "${disease}"
+    ${isVerify ? `- FÁRMACO ESPECÍFICO PARA VALIDAR: "${medication}"` : ''}
+    - TIPO DE JUNTA: ${type === 'ALLOPATHIC' ? 'ALOPÁTICA (Medicina Baseada em Evidências)' : 'INTEGRATIVA (Medicina Integrativa e Complementar)'}
     
-    REQUISITOS DA JUNTA:
-    1. Composição: 3 médicos líderes em suas áreas (ex: Infectologista PhD, Farmacêutico Clínico Sênior, Especialista na Patologia específica).
-    2. Dinâmica: Os especialistas DEVEM se desafiar, questionar a base de evidências uns dos outros e discutir casos reais/testes clínicos antes de chegarem ao consenso.
-    3. Linguagem: REGRA DE OURO - Para CADA jargão técnico ou termo médico, coloque IMEDIATAMENTE entre parênteses a tradução popular para um leigo.
+    REQUISITOS DA JUNTA (MANDATÓRIO):
+    ${type === 'ALLOPATHIC'
+            ? `1. **Composição**: Mínimo de 3 especialistas PhD com mais de 20 anos de experiência clínica e em pesquisa (ex: Infectologista, Clínico Geral, Farmacêutico).`
+            : `1. **Composição (RIGOROSA)**: A junta DEVE SER composta EXCLUSIVAMENTE por especialistas com **mais de 20 anos de experiência** nas seguintes áreas:
+       - **Especialista em Medicina Chinesa Tradicional (MTC)**
+       - **Homeopata Sênior**
+       - **Acupunturista Sênior**
+       - **Fisioterapeuta** (Se a condição exigir reabilitação física)
+       - **Médico Holístico**
+       - **Farmacêutico PhD** (Focado estritamente em interações medicamentosas)`
+        }
+    2.  **Debate**: Os especialistas DEVEM debater entre si, citando estudos e fontes de ouro (JAMA, Lancet, NEJM, Cochrane para Alopatia; Fontes renomadas de MTC/Integrativa para Integrativa), até chegarem a um CONSENSO sobre o melhor tratamento.
     
-    ESTRUTURA DA RESPOSTA (JSON VÁLIDO - SEM MARKDOWN):
+    O RELATÓRIO FINAL DEVE CONTER ESTRITAMENTE AS SEGUINTES SEÇÕES ESTRUTURADAS (JSON):
+    
+    1.  **conversation**: O debate transcrito entre os especialistas PhD.
+    2.  **newExams**: "Quais os exames necessários para confirmação" do diagnóstico ou estágio da doença.
+    3.  **goldStandardTreatments**: "Quais os novos tratamentos apontados nas fontes ouro" (JAMA, Lancet, etc.).
+    4.  **medicationEfficacy**: "Quais as novas medicações e sua taxa de eficácia no tratamento".
+    5.  **finalConsensus**: Resumo da conclusão da junta.
+    
+    ESTRUTURA JSON (VÁLIDO, SEM MARKDOWN, SEM PREÂMBULO):
     {
        "boardMembers": [
-         {"name": "...", "specialty": "...", "experience": "20+ anos", "role": "..."}
+         {"name": "PhD Dr...", "role": "Especialista em...", "experience": "30 anos (PhD)", "specialty": "..."}
        ],
        "conversation": [
-         {"speaker": "...", "message": "...", "round": 1}
+         {"speaker": "Infectologista PhD", "message": "Argumento técnico...", "round": 1}
        ],
-       "discussionSummary": "Resumo do embate técnico focado em evidências e testes.",
-       "finalConsensus": "# CONSENSO FINAL\\n\\nDecisão da junta sobre a melhor conduta...",
-       "recommendations": "Recomendações práticas...",
-       "disclaimer": "...",
-       "references": [{"title": "...", "url": "..."}],
-       "highRiskInteractions": [], "comorbiditiesAnalysis": "Análise técnica"
+       "discussionSummary": "Resumo executivo do debate.",
+       "newExams": [
+         {"name": "Nome do Exame", "reason": "Justificativa para confirmação diagnóstica", "specialist": "Solicitante"}
+       ],
+       "goldStandardTreatments": [
+         {"name": "Nome do Tratamento/Terapia", "description": "Descrição baseada em evidência recente", "source": "Fonte (ex: NEJM 2024)"}
+       ],
+       "medicationEfficacy": [
+         {"medication": "Nome da Medicação", "efficacy": "Taxa (ex: 85% de remissão)", "context": "Contexto clínico (ex: Fase 3, Pacientes graves)"}
+       ],
+       "finalConsensus": "Consenso final da junta sobre a melhor abordagem.",
+       "recommendations": "Recomendações finais sucintas.",
+       "disclaimer": "Este relatório é uma simulação educacional baseada em IA.",
+       "references": [{"title": "Fonte citada", "url": "URL"}]
     }
     `;
 
@@ -956,7 +980,7 @@ export const runTreatmentBoardAnalysis = async (disease: string, medication: str
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a Medical Board Simulation Engine. Output ONLY valid JSON. No markdown backticks, no preamble, no explanations outside the JSON."
+                        "content": "You are a PhD-Level Medical Board Simulator. Output ONLY valid JSON. No markdown backticks."
                     },
                     {
                         "role": "user",
@@ -979,7 +1003,7 @@ export const runTreatmentBoardAnalysis = async (disease: string, medication: str
         const cleanContent = content.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanContent);
 
-        // Normalize fields to prevent UI crashes
+        // Normalize fields
         return {
             boardMembers: parsed.boardMembers || [],
             conversation: parsed.conversation || [],
@@ -988,9 +1012,11 @@ export const runTreatmentBoardAnalysis = async (disease: string, medication: str
             recommendations: parsed.recommendations || "",
             disclaimer: parsed.disclaimer || "Aviso: Uso informativo apenas.",
             references: parsed.references || [],
-            highRiskInteractions: parsed.highRiskInteractions || [],
-            comorbiditiesAnalysis: parsed.comorbiditiesAnalysis || "",
-            suggestedExams: parsed.suggestedExams || []
+            highRiskInteractions: [],
+            comorbiditiesAnalysis: "",
+            newExams: parsed.newExams || [],
+            goldStandardTreatments: parsed.goldStandardTreatments || [],
+            medicationEfficacy: parsed.medicationEfficacy || []
         } as DiagnosisResult;
 
     } catch (e) {
