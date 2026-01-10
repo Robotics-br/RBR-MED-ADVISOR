@@ -249,12 +249,16 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
 
                                 {/* Status Messages */}
                                 <div className="space-y-2">
-                                    {[
+                                    {(title.includes('Análise Terapêutica') ? [
+                                        { text: '✓ Consultando base de fontes ouro (JAMA, Lancet, NEJM)', delay: '0s' },
+                                        { text: '✓ Verificando protocolos de tratamento recentes', delay: '1s' },
+                                        { text: '⏳ Debatendo consenso da junta médica...', delay: '2s', active: true }
+                                    ] : [
                                         { text: '✓ Analisando histórico médico e sintomas', delay: '0s' },
                                         { text: '✓ Verificando interações medicamentosas', delay: '1s' },
                                         { text: '✓ Consultando base de evidências científicas', delay: '2s' },
                                         { text: '⏳ Debatendo diagnóstico diferencial...', delay: '3s', active: true }
-                                    ].map((status, idx) => (
+                                    ]).map((status, idx) => (
                                         <div
                                             key={idx}
                                             className="flex items-center gap-2 text-sm animate-fade-in"
@@ -785,48 +789,52 @@ export const DiagnosisModal: React.FC<DiagnosisModalProps> = ({ isOpen, onClose,
                                     </div>
                                 </div>
 
-                                {/* Patient Profile */}
-                                <div style={{ marginBottom: '30px' }}>
-                                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '1px solid #cbd5e1', paddingBottom: '5px', marginBottom: '15px' }}>
-                                        I. PERFIL DO PACIENTE
+                                { /* Patient Profile - Hidden in Treatment Board Mode */}
+                                {!title.includes('Análise Terapêutica') && (
+                                    <div style={{ marginBottom: '30px' }}>
+                                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1e40af', borderBottom: '1px solid #cbd5e1', paddingBottom: '5px', marginBottom: '15px' }}>
+                                            I. PERFIL DO PACIENTE
+                                        </div>
+                                        <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
+                                            <tbody>
+                                                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '8px 0', width: '33%' }}><strong>NOME:</strong> {profile?.patientName || 'N/A'}</td>
+                                                    <td style={{ padding: '8px 0', width: '33%' }}><strong>GENERO:</strong> {profile?.gender || 'N/A'}</td>
+                                                    <td style={{ padding: '8px 0', width: '33%' }}><strong>IDADE:</strong> {profile?.age || 'N/A'} anos</td>
+                                                </tr>
+                                                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '8px 0' }}><strong>PESO:</strong> {profile?.weight}kg</td>
+                                                    <td style={{ padding: '8px 0' }}><strong>ALTURA:</strong> {profile?.height}cm</td>
+                                                    <td style={{ padding: '8px 0' }}><strong>IMC:</strong> {(parseFloat(profile?.weight || '0') / (Math.pow(parseFloat(profile?.height || '0') / 100, 2))).toFixed(1)}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
-                                        <tbody>
-                                            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                <td style={{ padding: '8px 0', width: '33%' }}><strong>NOME:</strong> {profile?.patientName || 'N/A'}</td>
-                                                <td style={{ padding: '8px 0', width: '33%' }}><strong>GENERO:</strong> {profile?.gender || 'N/A'}</td>
-                                                <td style={{ padding: '8px 0', width: '33%' }}><strong>IDADE:</strong> {profile?.age || 'N/A'} anos</td>
-                                            </tr>
-                                            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                <td style={{ padding: '8px 0' }}><strong>PESO:</strong> {profile?.weight}kg</td>
-                                                <td style={{ padding: '8px 0' }}><strong>ALTURA:</strong> {profile?.height}cm</td>
-                                                <td style={{ padding: '8px 0' }}><strong>IMC:</strong> {(parseFloat(profile?.weight || '0') / (Math.pow(parseFloat(profile?.height || '0') / 100, 2))).toFixed(1)}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                )}
 
-                                {/* Comorbidities & Interactions */}
-                                <div style={{ display: 'flex', gap: '30px', marginBottom: '35px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e40af', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>II. ANÁLISE DE COMORBIDADES</div>
-                                        <div style={{ fontSize: '10px', color: '#334155', lineHeight: '1.6', textAlign: 'justify' }} dangerouslySetInnerHTML={formatMedicalText(data.comorbiditiesAnalysis)} />
-                                    </div>
-                                    <div style={{ flex: 1, backgroundColor: '#fff1f2', padding: '20px', borderRadius: '15px', border: '1px solid #fecdd3' }}>
-                                        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#9f1239', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>III. RISCOS E INTERAÇÕES CRÍTICAS</div>
-                                        <div style={{ fontSize: '9px', color: '#be123c', lineHeight: '1.6' }}>
-                                            {(data.highRiskInteractions || []).length > 0 ? (
-                                                <ul style={{ margin: 0, paddingLeft: '15px' }}>
-                                                    {data.highRiskInteractions.map((risk, i) => (
-                                                        <li key={i} style={{ marginBottom: '8px' }}>{risk}</li>
-                                                    ))}
-                                                </ul>
-                                            ) : (
-                                                "Nenhuma interação de alto risco identificada pela junta médica para o perfil atual."
-                                            )}
+                                { /* Comorbidities & Interactions - Hidden in Treatment Board Mode */}
+                                {!title.includes('Análise Terapêutica') && (
+                                    <div style={{ display: 'flex', gap: '30px', marginBottom: '35px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#1e40af', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>II. ANÁLISE DE COMORBIDADES</div>
+                                            <div style={{ fontSize: '10px', color: '#334155', lineHeight: '1.6', textAlign: 'justify' }} dangerouslySetInnerHTML={formatMedicalText(data.comorbiditiesAnalysis)} />
+                                        </div>
+                                        <div style={{ flex: 1, backgroundColor: '#fff1f2', padding: '20px', borderRadius: '15px', border: '1px solid #fecdd3' }}>
+                                            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#9f1239', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>III. RISCOS E INTERAÇÕES CRÍTICAS</div>
+                                            <div style={{ fontSize: '9px', color: '#be123c', lineHeight: '1.6' }}>
+                                                {(data.highRiskInteractions || []).length > 0 ? (
+                                                    <ul style={{ margin: 0, paddingLeft: '15px' }}>
+                                                        {data.highRiskInteractions.map((risk, i) => (
+                                                            <li key={i} style={{ marginBottom: '8px' }}>{risk}</li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    "Nenhuma interação de alto risco identificada pela junta médica para o perfil atual."
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Altered Exams */}
                                 {/* Altered Exams */}
